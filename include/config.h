@@ -1,6 +1,7 @@
 // config.h
 
 // ============== COMMON ==============
+#define SLEEP_DELAY_MS 10000  // Time to go to sleep after last motion detection
 
 // ============== SICABS_OUTDOOR ==============
 #ifdef SICABS_OUTDOOR
@@ -32,6 +33,7 @@
 
 #define LED_FLASH_GPIO_NUM 4
 #define LED_BUILTIN 33
+#define BTN_BUILTIN 0
 #else
 #error "Camera model not selected"
 #endif
