@@ -10,40 +10,41 @@
 #include "credentials.h"
 
 // Globals
-static TimerHandle_t timer_sleep = NULL;  // Timer to go to sleep
+static TimerHandle_t timerToSleep = NULL;  // Timer to go to sleep
 // Keypad_I2C keypad = Keypad_I2C(makeKeymap(KEYPAD_KEYS), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS, KEYPAD_ADDR);
-SFM_Module fingerprint_sensor = SFM_Module(SFM_VCC, SFM_IRQ, SFM_TX, SFM_RX);
+SFM_Module fingerprintSensor = SFM_Module(SFM_VCC, SFM_IRQ, SFM_TX, SFM_RX);
 volatile bool fingerTouchFlag = false;
 
 // ISR
-void go_to_sleep(TimerHandle_t xTimer) {
+void goToSleep(TimerHandle_t xTimer) {
     Serial.println("Going to sleep");
     Serial.flush();
 
-    fingerprint_sensor.disable();
+    fingerprintSensor.disable();
     esp_deep_sleep_start();
 }
 
-void IRAM_ATTR motion_detected() {
+void IRAM_ATTR motionDetected() {
     if (digitalRead(BTN_BUILTIN) == LOW) {  // If motion detected
-        xTimerStopFromISR(timer_sleep, NULL);
+        xTimerStopFromISR(timerToSleep, NULL);
     } else {  // If motion stopped
-        xTimerResetFromISR(timer_sleep, NULL);
+        xTimerResetFromISR(timerToSleep, NULL);
     }
 }
 
-void IRAM_ATTR fingerprint_interrupt() {
-    volatile bool fingerTouchLastState = fingerprint_sensor.isTouched();
-
-    fingerprint_sensor.pinInterrupt();  // Update fingerprint_sensor.touched variable
+void IRAM_ATTR fingerprintInterrupt() {
+    volatile bool fingerTouchLastState = fingerprintSensor.isTouched();
+    fingerprintSensor.pinInterrupt();  // Update fingerprintSensor.touched variable
 
     if (!fingerTouchFlag) {
-        fingerTouchFlag = fingerTouchLastState != fingerprint_sensor.isTouched();
+        fingerTouchFlag = fingerTouchLastState != fingerprintSensor.isTouched();
     }
+
+    motionDetected();  // Reset the timerToSleep
 }
 
 // Tasks
-// void update_keypad(void *parameters) {
+// void updateKeypad(void *parameters) {
 //     while (true) {
 //         // TODO: Check if necessary to add a mutex
 //         keypad.getKeys();  // If a key changed state, it will call the
@@ -96,22 +97,22 @@ void setup() {
     // ============== DEEP SLEEP ==============
     // Configure wake up pin
     pinMode(BTN_BUILTIN, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(BTN_BUILTIN), motion_detected, CHANGE);  // Reset the timer_sleep
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);                                   // Enable wake up for motion detection
+    attachInterrupt(digitalPinToInterrupt(BTN_BUILTIN), motionDetected, CHANGE);  // Reset the timerToSleep
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);                                  // Enable wake up for motion detection
 
     // Timer to go to sleep
-    timer_sleep = xTimerCreate("Sleep Timer",                        // Name
-                               SLEEP_DELAY_MS / portTICK_PERIOD_MS,  // Timer ticks before expiration (max resolution is 1 ms)
-                               pdFALSE,                              // Don't auto-reload
-                               (void *)0,                            // Timer ID
-                               go_to_sleep);                         // Callback function
+    timerToSleep = xTimerCreate("Sleep Timer",                        // Name
+                                SLEEP_DELAY_MS / portTICK_PERIOD_MS,  // Timer ticks before expiration (max resolution is 1 ms)
+                                pdFALSE,                              // Don't auto-reload
+                                (void *)0,                            // Timer ID
+                                goToSleep);                           // Callback function
     // Check if timer was created
-    if (timer_sleep == NULL) {
+    if (timerToSleep == NULL) {
         Serial.println("Timer creation failed");
     } else {
         // Start the timer
         Serial.println("Starting timer");
-        xTimerStart(timer_sleep, portMAX_DELAY);
+        xTimerStart(timerToSleep, portMAX_DELAY);
     }
 
     // ============== KEYPAD ==============
@@ -123,7 +124,7 @@ void setup() {
     // keypad.addEventListener(keypadEvent);
     // // Create keypad task
     // xTaskCreatePinnedToCore(
-    //     update_keypad,    // Function to be called
+    //     updateKeypad,    // Function to be called
     //     "Update Keypad",  // Name of the task
     //     10000,            // Stack size in bytes  // TODO: Verify this value
     //     NULL,             // Task input parameter
@@ -132,7 +133,8 @@ void setup() {
     //     0);               // Core where the task should run (0 or 1)
 
     // ============== FINGERPRINT SENSOR ==============
-    fingerprint_sensor.setPinInterrupt(fingerprint_interrupt);
+    fingerprintSensor.setPinInterrupt(fingerprintInterrupt);
+    fingerprintSensor.setRingColor(SFM_RING_YELLOW, SFM_RING_OFF);
 
     // Delete setup and loop tasks
     // vTaskDelete(NULL);
@@ -142,16 +144,16 @@ void loop() {
     while (true) {
         if (fingerTouchFlag) {
             fingerTouchFlag = false;
-            if (fingerprint_sensor.isTouched()) {
+            if (fingerprintSensor.isTouched()) {
                 Serial.println("Fingerprint sensor touched");
-                // fingerprint_sensor.enable();
+                // fingerprintSensor.enable();
                 vTaskDelay(200 / portTICK_PERIOD_MS);
-                fingerprint_sensor.setRingColor(SFM_RING_YELLOW, SFM_RING_OFF);
+                fingerprintSensor.setRingColor(SFM_RING_GREEN, SFM_RING_OFF);
 
             } else {
-                fingerprint_sensor.setRingColor(SFM_RING_RED, SFM_RING_OFF);
+                fingerprintSensor.setRingColor(SFM_RING_RED, SFM_RING_OFF);
                 vTaskDelay(200 / portTICK_PERIOD_MS);
-                // fingerprint_sensor.disable();
+                // fingerprintSensor.disable();
             }
         }
     }
