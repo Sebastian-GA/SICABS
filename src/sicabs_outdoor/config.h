@@ -44,3 +44,9 @@ byte colPins[KEYPAD_COLS] = {3, 1, 5};
 
 #define KEYPAD_DEBOUNCE_TIME_MS 10  // Default by library is 10
 #define KEYPAD_HOLD_TIME_MS 500     // Default by library is 500
+
+// Fingerprint
+#define SFM_IRQ 21
+#define SFM_VCC 19
+#define SFM_TX 18
+#define SFM_RX 5
