@@ -1,15 +1,6 @@
 // config.h
 
-// ============== COMMON ==============
-#define SLEEP_DELAY_MS 10000  // Time to go to sleep after last motion detection
-
-// ============== SICABS_OUTDOOR ==============
-#ifdef SICABS_OUTDOOR
-#ifdef SICABS_INDOOR
-#error "Only one SICABS_XXX can be defined"
-#endif
-
-// Camera Settings
+// Camera Model
 #define CAMERA_MODEL_AI_THINKER
 
 #ifdef CAMERA_MODEL_AI_THINKER
@@ -38,14 +29,18 @@
 #error "Camera model not selected"
 #endif
 
-#endif
+// Keypad
+#define KEYPAD_ADDR 0x38
 
-// ============== SICABS_INDOOR ==============
-#ifdef SICABS_INDOOR
-#ifdef SICABS_OUTDOOR
-#error "Only one SICABS_XXX can be defined"
-#endif
+#define KEYPAD_ROWS 4
+#define KEYPAD_COLS 3
+char KEYPAD_KEYS[KEYPAD_ROWS][KEYPAD_COLS] = {
+    {'1', '2', '3'},
+    {'4', '5', '6'},
+    {'7', '8', '9'},
+    {'*', '0', '#'}};
+byte rowPins[KEYPAD_ROWS] = {2, 7, 6, 4};  // TODO: Verify these pins and index order
+byte colPins[KEYPAD_COLS] = {3, 1, 5};
 
-#define LED_BUILTIN 2
-
-#endif
+#define KEYPAD_DEBOUNCE_TIME_MS 10  // Default by library is 10
+#define KEYPAD_HOLD_TIME_MS 500     // Default by library is 500
