@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#define SICABS_INDOOR
+#include "common.h"
 #include "config.h"
 #include "credentials.h"
 
