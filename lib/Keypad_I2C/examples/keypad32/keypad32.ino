@@ -1,9 +1,10 @@
 // https://github.com/joeyoung/arduino_keypads
 // Coded by Pol Clota, credits go to Jow Young for he's library.
 
-#include <Wire.h>
-#include "Keypad.h"
 #include <Keypad_I2C.h>
+#include <Wire.h>
+
+#include "Keypad.h"
 
 const byte n_rows = 4;
 const byte n_cols = 4;
@@ -19,32 +20,28 @@ byte colPins[n_cols] = {4, 5, 6, 7};
 
 Keypad_I2C myKeypad = Keypad_I2C(makeKeymap(keys), rowPins, colPins, n_rows, n_cols, 0x38);
 
-String swOnState(KeyState kpadState)
-{
-    switch (kpadState)
-    {
-    case IDLE:
-        return "IDLE";
-        break;
-    case PRESSED:
-        return "PRESSED";
-        break;
-    case HOLD:
-        return "HOLD";
-        break;
-    case RELEASED:
-        return "RELEASED";
-        break;
-    } // end switch-case
+String swOnState(KeyState kpadState) {
+    switch (kpadState) {
+        case IDLE:
+            return "IDLE";
+            break;
+        case PRESSED:
+            return "PRESSED";
+            break;
+        case HOLD:
+            return "HOLD";
+            break;
+        case RELEASED:
+            return "RELEASED";
+            break;
+    }  // end switch-case
     return "";
-} // end switch on state function
+}  // end switch on state function
 
-void setup()
-{
+void setup() {
     // This will be called by App.setup()
     Serial.begin(115200);
-    while (!Serial)
-    { /*wait*/
+    while (!Serial) { /*wait*/
     }
     Serial.println("Press any key...");
     Wire.begin();
@@ -55,14 +52,11 @@ char myKeyp = NO_KEY;
 KeyState myKSp = IDLE;
 auto myHold = false;
 
-void loop()
-{
-
+void loop() {
     char myKey = myKeypad.getKey();
     KeyState myKS = myKeypad.getState();
 
-    if (myKSp != myKS && myKS != IDLE)
-    {
+    if (myKSp != myKS && myKS != IDLE) {
         Serial.print("myKS: ");
         Serial.println(swOnState(myKS));
         myKSp = myKS;
@@ -73,8 +67,7 @@ void loop()
         Serial.println("myKey: " + String(r));
         if (myKS == HOLD)
             myHold = true;
-        if (myKS == RELEASED)
-        {
+        if (myKS == RELEASED) {
             if (myHold)
                 r = r + "+";
             Serial.println(r.c_str());

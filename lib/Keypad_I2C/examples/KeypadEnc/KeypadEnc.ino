@@ -38,25 +38,26 @@
 
 #include <Keypad.h>
 
-const byte ROWS = 3; //four rows
-const byte COLS = 1; //three columns
+const byte ROWS = 3;  // four rows
+const byte COLS = 1;  // three columns
 char keys[ROWS][COLS] = {
-  {'A'},
-  {'B'},
-  {'C'}
- };
-byte rowPins[ROWS] = {7, 6, 5, }; //connect to the row pinouts of the kpd
-byte colPins[COLS] = {4}; //connect to the column pinouts of the kpd
+    {'A'},
+    {'B'},
+    {'C'}};
+byte rowPins[ROWS] = {
+    7,
+    6,
+    5,
+};                         // connect to the row pinouts of the kpd
+byte colPins[COLS] = {4};  // connect to the column pinouts of the kpd
 
-
-Keypad kpd( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
-
-
+Keypad kpd(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 void setup() {
-  Serial.begin(9600);
-  while( !Serial ){/*wait*/}   //for USB serial switching boards
-  kpd.setDebounceTime(1);
+    Serial.begin(9600);
+    while (!Serial) { /*wait*/
+    }                 // for USB serial switching boards
+    kpd.setDebounceTime(1);
 }
 
 unsigned long loopCount = 0;
@@ -65,55 +66,53 @@ String msg = "";
 int enccount, prevcount;
 
 void loop() {
-
-  // Fills kpd.key[ ] array with up-to 10 active keys.
-  // Returns true if there are ANY active keys.
-  if (kpd.getKeys())
-  {
-    bool kA, kB;
-    for (int i=0; i<LIST_MAX; i++)   // Scan the whole key list.
-    {
-      if ( kpd.key[i].stateChanged )   // Only find keys that have changed state.
-      {
-        switch (kpd.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
-            case PRESSED:
-                msg = " PRESSED.";
-                if( kpd.key[i].kchar == 'B' ) {    // rotary encoder direction detection
-                  if( kA ) enccount++;           //msg = " up";
-                  kB = true;
+    // Fills kpd.key[ ] array with up-to 10 active keys.
+    // Returns true if there are ANY active keys.
+    if (kpd.getKeys()) {
+        bool kA, kB;
+        for (int i = 0; i < LIST_MAX; i++)  // Scan the whole key list.
+        {
+            if (kpd.key[i].stateChanged)  // Only find keys that have changed state.
+            {
+                switch (kpd.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
+                    case PRESSED:
+                        msg = " PRESSED.";
+                        if (kpd.key[i].kchar == 'B') {  // rotary encoder direction detection
+                            if (kA) enccount++;         // msg = " up";
+                            kB = true;
+                        }
+                        if (kpd.key[i].kchar == 'A') {
+                            if (kB) enccount--;  // msg = " dn";
+                            kA = true;
+                        }  // end encoder detection on make
+                        if (kpd.key[i].kchar == 'C') Serial.println('C');
+                        break;
+                        //            case RELEASED:
+                        //                kA = false;
+                        //                kB = false;
+                        //                break;
+                    case RELEASED:
+                        msg = " RELEASED.";
+                        if (kpd.key[i].kchar == 'B') {  // rotary encoder direction detection
+                            if (!kA) enccount++;        // msg = " up";
+                            kB = false;
+                        }
+                        if (kpd.key[i].kchar == 'A') {
+                            if (!kB) enccount--;  // msg = " dn";
+                            kA = false;
+                        }  // end encoder detection on break
+                        break;
                 }
-                if( kpd.key[i].kchar == 'A' ) {
-                  if( kB ) enccount--;            //msg = " dn";
-                  kA = true;
-                }               // end encoder detection on make
-                if( kpd.key[i].kchar == 'C' ) Serial.println( 'C' );
-                break;
-//            case RELEASED:
-//                kA = false;
-//                kB = false;
-//                break;
-            case RELEASED:
-                msg = " RELEASED.";
-                if( kpd.key[i].kchar == 'B' ) {    // rotary encoder direction detection
-                  if( !kA ) enccount++;            //msg = " up";
-                  kB = false;
-                }
-                if( kpd.key[i].kchar == 'A' ) {
-                  if( !kB ) enccount--;            //msg = " dn";
-                  kA = false;
-                }               // end encoder detection on break
-                break;
+                //       Serial.print("Key ");
+                //       Serial.print(kpd.key[i].kchar);
+                //        if( kpd.key[i].kchar == 'A' || kpd.key[i].kchar == 'B' ) Serial.println(msg);
+            }
         }
- //       Serial.print("Key ");
- //       Serial.print(kpd.key[i].kchar);
- //        if( kpd.key[i].kchar == 'A' || kpd.key[i].kchar == 'B' ) Serial.println(msg);
-      }
     }
-  }
 
-  if(enccount != prevcount ) {
-    prevcount = enccount;
-    Serial.println( enccount, DEC );
-  }
-  
+    if (enccount != prevcount) {
+        prevcount = enccount;
+        Serial.println(enccount, DEC);
+    }
+
 }  // End loop
