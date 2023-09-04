@@ -49,7 +49,7 @@ class SFM_Module {
 #if defined(ARDUINO_AVR_PROMICRO16)
     SFM_Module(uint8_t vccPin, uint8_t irqPin, HardwareSerial &hs);
 #else
-    SFM_Module(uint8_t vccPin, uint8_t irqPin, uint8_t rxPin, uint8_t txPin, uint8_t uartIndex = 1);
+    SFM_Module(uint8_t vccPin, uint8_t irqPin, uint8_t rxPin, uint8_t txPin, uint8_t uartIndex = 2);
 #endif
     ~SFM_Module();
     void enable();

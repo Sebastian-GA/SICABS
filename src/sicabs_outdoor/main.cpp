@@ -94,26 +94,9 @@ void setup() {
     Serial.println();
     Serial.println("---SICABS Outdoor---");
 
-    // ============== DEEP SLEEP ==============
-    // Configure wake up pin
-    pinMode(BTN_BUILTIN, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(BTN_BUILTIN), motionDetected, CHANGE);  // Reset the timerToSleep
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);                                  // Enable wake up for motion detection
-
-    // Timer to go to sleep
-    timerToSleep = xTimerCreate("Sleep Timer",                        // Name
-                                SLEEP_DELAY_MS / portTICK_PERIOD_MS,  // Timer ticks before expiration (max resolution is 1 ms)
-                                pdFALSE,                              // Don't auto-reload
-                                (void *)0,                            // Timer ID
-                                goToSleep);                           // Callback function
-    // Check if timer was created
-    if (timerToSleep == NULL) {
-        Serial.println("Timer creation failed");
-    } else {
-        // Start the timer
-        Serial.println("Starting timer");
-        xTimerStart(timerToSleep, portMAX_DELAY);
-    }
+    // ============== PIR SENSOR ==============
+    pinMode(PIR_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(PIR_PIN), motionDetected, CHANGE);  // Reset the timerToSleep
 
     // ============== KEYPAD ==============
     // Initialize keypad
@@ -135,7 +118,24 @@ void setup() {
     // ============== FINGERPRINT SENSOR ==============
     fingerprintSensor.setPinInterrupt(fingerprintInterrupt);
     fingerprintSensor.setRingColor(SFM_RING_YELLOW, SFM_RING_OFF);
-    esp_sleep_enable_ext1_wakeup(0x2000, ESP_EXT1_WAKEUP_ANY_HIGH);
+
+    // ============== DEEP SLEEP ==============
+    // Timer to go to sleep
+    timerToSleep = xTimerCreate("Sleep Timer",                        // Name
+                                SLEEP_DELAY_MS / portTICK_PERIOD_MS,  // Timer ticks before expiration (max resolution is 1 ms)
+                                pdFALSE,                              // Don't auto-reload
+                                (void *)0,                            // Timer ID
+                                goToSleep);                           // Callback function
+    // Check if timer was created
+    if (timerToSleep == NULL) {
+        Serial.println("Timer creation failed");
+    } else {
+        // Start the timer
+        Serial.println("Starting timer");
+        xTimerStart(timerToSleep, portMAX_DELAY);
+    }
+    // Set wakeup sources
+    esp_sleep_enable_ext1_wakeup(WAKEUP_PIN_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
 
     // Delete setup and loop tasks
     // vTaskDelete(NULL);
