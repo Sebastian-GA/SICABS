@@ -46,7 +46,10 @@ byte colPins[KEYPAD_COLS] = {3, 1, 5};
 #define KEYPAD_HOLD_TIME_MS 500     // Default by library is 500
 
 // Fingerprint
-#define SFM_IRQ 21
-#define SFM_VCC 19
-#define SFM_TX 18
-#define SFM_RX 5
+#define SFM_IRQ 13
+#define SFM_VCC 12
+#define SFM_TX 15
+#define SFM_RX 14
+
+// WakeUp Sources
+#define BUTTON_PIN_BITMASK 0x2001  // 2^0 + 2^13

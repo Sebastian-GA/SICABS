@@ -135,26 +135,25 @@ void setup() {
     // ============== FINGERPRINT SENSOR ==============
     fingerprintSensor.setPinInterrupt(fingerprintInterrupt);
     fingerprintSensor.setRingColor(SFM_RING_YELLOW, SFM_RING_OFF);
+    esp_sleep_enable_ext1_wakeup(0x2000, ESP_EXT1_WAKEUP_ANY_HIGH);
 
     // Delete setup and loop tasks
     // vTaskDelete(NULL);
 }
 
 void loop() {
-    while (true) {
-        if (fingerTouchFlag) {
-            fingerTouchFlag = false;
-            if (fingerprintSensor.isTouched()) {
-                Serial.println("Fingerprint sensor touched");
-                // fingerprintSensor.enable();
-                vTaskDelay(200 / portTICK_PERIOD_MS);
-                fingerprintSensor.setRingColor(SFM_RING_GREEN, SFM_RING_OFF);
+    if (fingerTouchFlag) {
+        fingerTouchFlag = false;
+        if (fingerprintSensor.isTouched()) {
+            Serial.println("Fingerprint sensor touched");
+            // fingerprintSensor.enable();
+            vTaskDelay(200 / portTICK_PERIOD_MS);
+            fingerprintSensor.setRingColor(SFM_RING_GREEN, SFM_RING_OFF);
 
-            } else {
-                fingerprintSensor.setRingColor(SFM_RING_RED, SFM_RING_OFF);
-                vTaskDelay(200 / portTICK_PERIOD_MS);
-                // fingerprintSensor.disable();
-            }
+        } else {
+            fingerprintSensor.setRingColor(SFM_RING_RED, SFM_RING_OFF);
+            vTaskDelay(200 / portTICK_PERIOD_MS);
+            // fingerprintSensor.disable();
         }
     }
 }
