@@ -30,7 +30,7 @@
 #endif
 
 // Keypad
-#define KEYPAD_ADDR 0x38
+#define KEYPAD_ADDR 0x27
 
 #define KEYPAD_ROWS 4
 #define KEYPAD_COLS 3
@@ -39,8 +39,8 @@ char KEYPAD_KEYS[KEYPAD_ROWS][KEYPAD_COLS] = {
     {'4', '5', '6'},
     {'7', '8', '9'},
     {'*', '0', '#'}};
-byte rowPins[KEYPAD_ROWS] = {2, 7, 6, 4};  // TODO: Verify these pins and index order
-byte colPins[KEYPAD_COLS] = {3, 1, 5};
+byte rowPins[KEYPAD_ROWS] = {1, 7, 6, 4};  // ROW1 -> P1, ROW2 -> P7, ROW3 -> P6, ROW4 -> P4
+byte colPins[KEYPAD_COLS] = {2, 0, 5};     // COL1 -> P2, COL2 -> P0, COL3 -> P5
 
 #define KEYPAD_DEBOUNCE_TIME_MS 10  // Default by library is 10
 #define KEYPAD_HOLD_TIME_MS 500     // Default by library is 500
