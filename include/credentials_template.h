@@ -1,5 +1,9 @@
-// credentials_template.h
-// Copy and rename this file to credentials.h and fill in your WiFi credentials.
+/**
+ * @file credentials_template.h
+ * @brief Credentials file
+ *
+ * Copy and rename this file to credentials.h and fill in your WiFi credentials.
+ */
 
 #ifndef CREDENTIALS_H
 #define CREDENTIALS_H

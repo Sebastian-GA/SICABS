@@ -1,4 +1,12 @@
-// config.h
+/**
+ * @file config.h
+ * @brief Configuration file
+ */
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#include <Arduino.h>
 
 // Camera Model
 #define CAMERA_MODEL_AI_THINKER
@@ -34,13 +42,9 @@
 
 #define KEYPAD_ROWS 4
 #define KEYPAD_COLS 3
-char KEYPAD_KEYS[KEYPAD_ROWS][KEYPAD_COLS] = {
-    {'1', '2', '3'},
-    {'4', '5', '6'},
-    {'7', '8', '9'},
-    {'*', '0', '#'}};
-byte rowPins[KEYPAD_ROWS] = {1, 7, 6, 4};  // ROW1 -> P1, ROW2 -> P7, ROW3 -> P6, ROW4 -> P4
-byte colPins[KEYPAD_COLS] = {2, 0, 5};     // COL1 -> P2, COL2 -> P0, COL3 -> P5
+extern char KEYPAD_KEYS[KEYPAD_ROWS][KEYPAD_COLS];
+extern byte rowPins[KEYPAD_ROWS];
+extern byte colPins[KEYPAD_COLS];
 
 #define KEYPAD_DEBOUNCE_TIME_MS 10  // Default by library is 10
 #define KEYPAD_HOLD_TIME_MS 500     // Default by library is 500
@@ -54,3 +58,5 @@ byte colPins[KEYPAD_COLS] = {2, 0, 5};     // COL1 -> P2, COL2 -> P0, COL3 -> P5
 // WakeUp Sources
 #define PIR_PIN 12
 #define WAKEUP_PIN_BITMASK 0x3000  // 2^12 + 2^13
+
+#endif
