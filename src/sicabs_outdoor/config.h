@@ -37,6 +37,10 @@
 #error "Camera model not selected"
 #endif
 
+// I2C
+#define I2C_SDA 2
+#define I2C_SCL 4
+
 // Keypad
 #define KEYPAD_ADDR 0x27
 
@@ -58,5 +62,6 @@ extern byte colPins[KEYPAD_COLS];
 // WakeUp Sources
 #define PIR_PIN 12
 #define WAKEUP_PIN_BITMASK 0x3000  // 2^12 + 2^13
+#define SLEEP_DELAY_MS 10000       // Time to go to sleep after last motion detection
 
 #endif
