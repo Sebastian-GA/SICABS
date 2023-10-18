@@ -38,8 +38,8 @@
 #endif
 
 // I2C
-#define I2C_SDA 2
-#define I2C_SCL 4
+#define I2C_SDA 14
+#define I2C_SCL 2
 
 // Keypad
 #define KEYPAD_ADDR 0x27
@@ -54,14 +54,14 @@ extern byte colPins[KEYPAD_COLS];
 #define KEYPAD_HOLD_TIME_MS 500     // Default by library is 500
 
 // Fingerprint
-#define SFM_VCC 16
+#define SFM_VCC 0  // Don't care about this definition, just connect VCC to 3.3V
 #define SFM_IRQ 13
-#define SFM_TX 15
-#define SFM_RX 14
+#define SFM_TX 16
+#define SFM_RX 12
 
 // WakeUp Sources
-#define PIR_PIN 12
-#define WAKEUP_PIN_BITMASK 0x3000  // 2^12 + 2^13
+#define PIR_PIN 15
+#define WAKEUP_PIN_BITMASK 0xA000  // 2^13 + 2^15
 #define SLEEP_DELAY_MS 10000       // Time to go to sleep after last motion detection
 
 #endif

@@ -22,8 +22,8 @@ char hex_char[17] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B',
 #if defined(ESP32)
 SFM_Module::SFM_Module(uint8_t vccPin, uint8_t irqPin, uint8_t rxPin, uint8_t txPin, uint8_t uartIndex) : sfmSerial(uartIndex), vcc_pin(vccPin), irq_pin(irqPin), rx_pin(rxPin), tx_pin(txPin) {
     pinMode(irq_pin, INPUT_PULLDOWN);
-    pinMode(vcc_pin, OUTPUT);
-    digitalWrite(vcc_pin, HIGH);  // Enable sensor vcc
+    // pinMode(vcc_pin, OUTPUT);
+    // digitalWrite(vcc_pin, HIGH);  // Enable sensor vcc
     cmdBuffer[0] = 0xF5;
     cmdBuffer[7] = 0xF5;
     sfmSerial.begin(115200, SERIAL_8N1, rx_pin, tx_pin);
@@ -240,10 +240,12 @@ bool SFM_Module::isConnected() {
     return uuid.length() == 18;
 }
 void SFM_Module::enable() {
-    digitalWrite(vcc_pin, HIGH);
+    // digitalWrite(vcc_pin, HIGH);
+    return;
 }
 void SFM_Module::disable() {
-    digitalWrite(vcc_pin, LOW);
+    // digitalWrite(vcc_pin, LOW);
+    return;
 }
 // result = xor checksum buffer[1:5]
 uint8_t SFM_Module::_getCheckSum(uint8_t *buffer) {

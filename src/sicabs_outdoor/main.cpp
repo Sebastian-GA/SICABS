@@ -77,19 +77,16 @@ void setup() {
     // ============== DEEP SLEEP ==============
     // Timer to go to sleep
     timerToSleep = xTimerCreate("Sleep Timer",                        // Name
-                                SLEEP_DELAY_MS / portTICK_PERIOD_MS,  // Timer ticks before expiration (max resolution is 1 ms)
+                                SLEEP_DELAY_MS / portTICK_PERIOD_MS,  // Timer ticks before expiration
                                 pdFALSE,                              // Don't auto-reload
                                 (void *)0,                            // Timer ID
                                 goToSleep);                           // Callback function
     // Check if timer was created
-    if (timerToSleep == NULL) {
-        Serial.println("Timer creation failed");
-        // TODO: Handle error
-    } else {
-        // Start the timer
-        Serial.println("Starting timer");
-        xTimerStart(timerToSleep, portMAX_DELAY);
-    }
+    if (timerToSleep == NULL)
+        ESP.restart();  // Timer creation failed
+    else
+        xTimerStart(timerToSleep, portMAX_DELAY);  // Start the timer
+
     // Set wakeup sources
     esp_sleep_enable_ext1_wakeup(WAKEUP_PIN_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
 
@@ -133,17 +130,7 @@ void setup() {
 void loop() {
     if (fingerTouchFlag) {
         fingerTouchFlag = false;
-        if (fingerprintSensor.isTouched()) {
-            Serial.println("Fingerprint sensor touched");
-            // fingerprintSensor.enable();
-            vTaskDelay(200 / portTICK_PERIOD_MS);
-            fingerprintSensor.setRingColor(SFM_RING_GREEN, SFM_RING_OFF);
-
-        } else {
-            fingerprintSensor.setRingColor(SFM_RING_RED, SFM_RING_OFF);
-            vTaskDelay(200 / portTICK_PERIOD_MS);
-            // fingerprintSensor.disable();
-        }
+        Serial.println("Fingerprint sensor touched");
     }
 }
 
@@ -160,7 +147,8 @@ void goToSleep(TimerHandle_t xTimer) {
     Serial.println("Going to sleep");
     Serial.flush();
 
-    fingerprintSensor.disable();
+    fingerprintSensor.setRingColor(SFM_RING_OFF, SFM_RING_OFF);
+    // fingerprintSensor.disable();  // TODO: another way to save power?
 
     esp_deep_sleep_start();
 }
@@ -187,8 +175,8 @@ void IRAM_ATTR fingerprintInterrupt() {
     volatile bool fingerTouchLastState = fingerprintSensor.isTouched();
     fingerprintSensor.pinInterrupt();  // Update fingerprintSensor.touched variable
 
-    if (!fingerTouchFlag) {
-        fingerTouchFlag = fingerTouchLastState != fingerprintSensor.isTouched();
+    if (!fingerTouchFlag && (fingerTouchLastState != fingerprintSensor.isTouched()) && fingerprintSensor.isTouched()) {
+        fingerTouchFlag = true;
     }
 
     xTimerResetFromISR(timerToSleep, NULL);  // Reset the timerToSleep
@@ -210,22 +198,24 @@ void keypadEvent(KeypadEvent key) {
 
     switch (keyState) {
         case PRESSED:
-            switch (key) {
-                case '*':
-                    break;
-            }
+            Serial.print("Pressed: ");
+            Serial.println(key);
+            // switch (key) {
+            //     case '*':
+            //         break;
+            // }
             break;
         case RELEASED:
-            switch (key) {
-                case '*':
-                    break;
-            }
+            // switch (key) {
+            //     case '*':
+            //         break;
+            // }
             break;
         case HOLD:
-            switch (key) {
-                case '*':
-                    break;
-            }
+            // switch (key) {
+            //     case '*':
+            //         break;
+            // }
             break;
         case IDLE:
             // In this state, this function is called only once after released
