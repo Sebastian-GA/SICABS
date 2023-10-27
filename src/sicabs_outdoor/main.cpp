@@ -32,31 +32,19 @@
 TwoWire WireI2C = TwoWire(0);
 
 Keypad_I2C keypad = Keypad_I2C(makeKeymap(KEYPAD_KEYS), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS, KEYPAD_ADDR, 1, &WireI2C);
-SFM_Module fingerprintSensor = SFM_Module(SFM_VCC, SFM_IRQ, SFM_TX, SFM_RX);
+static QueueHandle_t keypadQueue = NULL;  // Queue to store keypad input
+
+SFM_Module SFM = SFM_Module(SFM_VCC, SFM_IRQ, SFM_TX, SFM_RX);
 volatile bool fingerTouchFlag = false;
 
 static TimerHandle_t timerToSleep = NULL;  // Timer to go to sleep
 
-/**************************************************************************
- * FUNCTION DECLARATIONS
- **************************************************************************/
+FSMState FSMCurrentState = FSM_IDLE;
+FSMState FSMLastState = FSM_IDLE;
 
-// Functions
-
-void goToSleep(TimerHandle_t xTimer);
-
-// Interrupts
-
-void IRAM_ATTR motionDetected();
-void IRAM_ATTR fingerprintInterrupt();
-
-// Callbacks
-
-void keypadEvent(KeypadEvent key);
-
-// Tasks
-
-void updateKeypad(void *parameters);
+char pinPassword[PIN_PASSWORD_LENGTH];  // Password
+uint8_t temp = 0;                       // used to get recognition return
+uint16_t tempUid = 0;                   // used to get recognized uid
 
 /**************************************************************************
  * SETUP AND LOOP
@@ -106,10 +94,12 @@ void setup() {
         1,                // Priority of the task
         NULL,             // Task handle
         0);               // Core where the task should run (0 or 1)
+    // Create keypad queue
+    keypadQueue = xQueueCreate(10, sizeof(char));
 
     // ============== FINGERPRINT SENSOR ==============
-    fingerprintSensor.setPinInterrupt(fingerprintInterrupt);
-    fingerprintSensor.setRingColor(SFM_RING_YELLOW, SFM_RING_OFF);
+    SFM.setPinInterrupt(fingerprintInterrupt);
+    SFM.setRingColor(SFM_RING_YELLOW, SFM_RING_OFF);
 
     // ============== ESP-NOW ==============
     // // Initialize ESP-NOW
@@ -125,12 +115,94 @@ void setup() {
     // // Register SICABS Indoor as peer
     // esp_now_peer_info_t peerInfo;
     // memcpy(peerInfo.peer_addr, ESP_IN_WIFI_MAC, 6
+
+    FSMCurrentState = FSM_TOCK_TOCK;
 }
 
 void loop() {
-    if (fingerTouchFlag) {
-        fingerTouchFlag = false;
-        Serial.println("Fingerprint sensor touched");
+    switch (FSMCurrentState) {
+        // ============== FSM IDLE ==============
+        case FSM_IDLE:
+            // Do nothing
+            break;
+
+        // ============== FSM TOCK TOCK ==============
+        case FSM_TOCK_TOCK:
+            // After wake up, start streaming video and transmit tock tock signal
+            // via ESP-NOW to SICABS Indoor
+            if (FSMLastState != FSMCurrentState) {  // First time in this state
+                Serial.println("Tock tock");
+                FSMLastState = FSMCurrentState;
+            }
+
+            // TODO: Start streaming video
+            // TODO: Send tock tock signal via ESP-NOW
+
+            FSMCurrentState = FSM_WAIT_FOR_INPUT;
+            break;
+
+        // ============== FSM WAIT FOR INPUT ==============
+        case FSM_WAIT_FOR_INPUT:
+            // Waiting for input from keypad or fingerprint sensor
+            static uint8_t pinIndex = 0;
+
+            if (FSMLastState != FSMCurrentState) {  // First time in this state
+                SFM.setRingColor(SFM_RING_YELLOW, SFM_RING_OFF);
+                xQueueReset(keypadQueue);  // Clear keypad queue
+                pinIndex = 0;              // Reset pin index
+
+                Serial.println("Please put your finger or insert your password");
+                FSMLastState = FSMCurrentState;
+            }
+
+            // TODO: Check if fingerprint sensor is touched (prevent false touchs)
+            temp = SFM.recognition_1vN(tempUid);
+            if (tempUid != 0) {
+                SFM.setRingColor(SFM_RING_GREEN);
+                Serial.printf("Successfully matched with UID: %d", tempUid);
+            }
+
+            // Read from queue the keys pressed
+            char key;
+            if (xQueueReceive(keypadQueue, &key, 0) == pdTRUE) {
+                Serial.print("Key pressed: ");
+                Serial.println(key);
+
+                if (key != '#' && key != '*') {  // If key is a number
+                    // TODO: Print on Screen *
+                    pinPassword[pinIndex++] = key;
+                }
+
+                if (pinIndex == PIN_PASSWORD_LENGTH) {  // If password is complete
+                    FSMCurrentState = FSM_VALIDATE_PASSWORD;
+                }
+            }
+
+            break;
+
+        // ============== FSM VALIDATE PASSWORD ==============
+        case FSM_VALIDATE_PASSWORD:
+            // Validate password
+            if (FSMLastState != FSMCurrentState) {  // First time in this state
+                Serial.println("Validating password");
+                FSMLastState = FSMCurrentState;
+            }
+
+            Serial.println(pinPassword);
+
+            break;
+
+        // ============== FSM REGISTER NEW FINGERPRINT ==============
+        case FSM_REGISTER_NEW_FINGERPRINT:
+            // Register new fingerprint
+
+            break;
+
+        // ============== FSM REGISTER NEW PASSWORD ==============
+        case FSM_REGISTER_NEW_PASSWORD:
+            // Register new password
+
+            break;
     }
 }
 
@@ -147,8 +219,8 @@ void goToSleep(TimerHandle_t xTimer) {
     Serial.println("Going to sleep");
     Serial.flush();
 
-    fingerprintSensor.setRingColor(SFM_RING_OFF, SFM_RING_OFF);
-    // fingerprintSensor.disable();  // TODO: another way to save power?
+    SFM.setRingColor(SFM_RING_OFF, SFM_RING_OFF);
+    // SFM.disable();  // TODO: another way to save power?
 
     esp_deep_sleep_start();
 }
@@ -172,10 +244,10 @@ void IRAM_ATTR motionDetected() {
  * @brief Fingerprint interrupt
  */
 void IRAM_ATTR fingerprintInterrupt() {
-    volatile bool fingerTouchLastState = fingerprintSensor.isTouched();
-    fingerprintSensor.pinInterrupt();  // Update fingerprintSensor.touched variable
+    volatile bool fingerTouchLastState = SFM.isTouched();
+    SFM.pinInterrupt();  // Update SFM.touched variable
 
-    if (!fingerTouchFlag && (fingerTouchLastState != fingerprintSensor.isTouched()) && fingerprintSensor.isTouched()) {
+    if (!fingerTouchFlag && (fingerTouchLastState != SFM.isTouched()) && SFM.isTouched()) {
         fingerTouchFlag = true;
     }
 
@@ -198,24 +270,13 @@ void keypadEvent(KeypadEvent key) {
 
     switch (keyState) {
         case PRESSED:
-            Serial.print("Pressed: ");
-            Serial.println(key);
-            // switch (key) {
-            //     case '*':
-            //         break;
-            // }
+            if (xQueueSend(keypadQueue, &key, 0) != pdTRUE) {
+                Serial.println("Failed to send key to queue");  // Queue full
+            }
             break;
         case RELEASED:
-            // switch (key) {
-            //     case '*':
-            //         break;
-            // }
             break;
         case HOLD:
-            // switch (key) {
-            //     case '*':
-            //         break;
-            // }
             break;
         case IDLE:
             // In this state, this function is called only once after released

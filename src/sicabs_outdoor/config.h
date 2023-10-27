@@ -8,7 +8,12 @@
 
 #include <Arduino.h>
 
+/**************************************************************************
+ * PIN DEFINITIONS
+ **************************************************************************/
+
 // Camera Model
+
 #define CAMERA_MODEL_AI_THINKER
 
 #ifdef CAMERA_MODEL_AI_THINKER
@@ -38,10 +43,12 @@
 #endif
 
 // I2C
+
 #define I2C_SDA 14
 #define I2C_SCL 2
 
 // Keypad
+
 #define KEYPAD_ADDR 0x27
 
 #define KEYPAD_ROWS 4
@@ -54,14 +61,60 @@ extern byte colPins[KEYPAD_COLS];
 #define KEYPAD_HOLD_TIME_MS 500     // Default by library is 500
 
 // Fingerprint
+
 #define SFM_VCC 0  // Don't care about this definition, just connect VCC to 3.3V
 #define SFM_IRQ 13
 #define SFM_TX 16
 #define SFM_RX 12
 
 // WakeUp Sources
+
 #define PIR_PIN 15
 #define WAKEUP_PIN_BITMASK 0xA000  // 2^13 + 2^15
-#define SLEEP_DELAY_MS 10000       // Time to go to sleep after last motion detection
+
+/**************************************************************************
+ * CONSTANTS
+ **************************************************************************/
+
+// Deep Sleep
+
+#define SLEEP_DELAY_MS 10000  // Time to go to sleep after last motion detection
+
+// Keypad
+
+#define PIN_PASSWORD_LENGTH 6  // Length of the password
+
+/**************************************************************************
+ * FUNCTION DECLARATIONS
+ **************************************************************************/
+
+// State Machine
+
+enum FSMState {
+    FSM_IDLE,
+    FSM_TOCK_TOCK,
+    FSM_WAIT_FOR_INPUT,
+    FSM_VALIDATE_PASSWORD,
+
+    FSM_REGISTER_NEW_FINGERPRINT,
+    FSM_REGISTER_NEW_PASSWORD,
+};
+
+// Functions
+
+void goToSleep(TimerHandle_t xTimer);
+
+// Interrupts
+
+void IRAM_ATTR motionDetected();
+void IRAM_ATTR fingerprintInterrupt();
+
+// Callbacks
+
+void keypadEvent(KeypadEvent key);
+
+// Tasks
+
+void updateKeypad(void *parameters);
 
 #endif
