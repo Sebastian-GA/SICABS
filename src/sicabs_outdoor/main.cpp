@@ -24,6 +24,7 @@
 #include "common.h"
 #include "config.h"
 #include "credentials.h"
+#include "pin_definitions.h"
 
 /**************************************************************************
  * GLOBAL VARIABLES
@@ -42,9 +43,30 @@ static TimerHandle_t timerToSleep = NULL;  // Timer to go to sleep
 FSMState FSMCurrentState = FSM_IDLE;
 FSMState FSMLastState = FSM_IDLE;
 
-char pinPassword[PIN_PASSWORD_LENGTH];  // Password
-uint8_t temp = 0;                       // used to get recognition return
-uint16_t tempUid = 0;                   // used to get recognized uid
+char pinPassword[PASSWORD_LENGTH];  // Password
+uint8_t temp = 0;                   // used to get recognition return
+uint16_t tempUid = 0;               // used to get recognized uid
+
+/**************************************************************************
+ * FUNCTION DECLARATIONS
+ **************************************************************************/
+
+// Functions
+
+void goToSleep(TimerHandle_t xTimer);
+
+// Interrupts
+
+void IRAM_ATTR motionDetected();
+void IRAM_ATTR fingerprintInterrupt();
+
+// Callbacks
+
+void keypadEvent(KeypadEvent key);
+
+// Tasks
+
+void updateKeypad(void *parameters);
 
 /**************************************************************************
  * SETUP AND LOOP
@@ -144,12 +166,12 @@ void loop() {
         // ============== FSM WAIT FOR INPUT ==============
         case FSM_WAIT_FOR_INPUT:
             // Waiting for input from keypad or fingerprint sensor
-            static uint8_t pinIndex = 0;
+            static uint8_t pwdIndex = 0;
 
             if (FSMLastState != FSMCurrentState) {  // First time in this state
                 SFM.setRingColor(SFM_RING_YELLOW, SFM_RING_OFF);
                 xQueueReset(keypadQueue);  // Clear keypad queue
-                pinIndex = 0;              // Reset pin index
+                pwdIndex = 0;              // Reset pin index
 
                 Serial.println("Please put your finger or insert your password");
                 FSMLastState = FSMCurrentState;
@@ -170,10 +192,10 @@ void loop() {
 
                 if (key != '#' && key != '*') {  // If key is a number
                     // TODO: Print on Screen *
-                    pinPassword[pinIndex++] = key;
+                    pinPassword[pwdIndex++] = key;
                 }
 
-                if (pinIndex == PIN_PASSWORD_LENGTH) {  // If password is complete
+                if (pwdIndex == PASSWORD_LENGTH) {  // If password is complete
                     FSMCurrentState = FSM_VALIDATE_PASSWORD;
                 }
             }
