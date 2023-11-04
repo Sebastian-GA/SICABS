@@ -47,8 +47,8 @@
 
 // Fingerprint
 
-#define SFM_VCC 0  // Don't care about this definition, just connect VCC to 3.3V
-#define SFM_IRQ 13
+#define SFM_VCC 13
+#define SFM_IRQ -1  // Not connected because of false interrupts
 #define SFM_TX 16
 #define SFM_RX 12
 
@@ -57,9 +57,8 @@
 #define PIR_PIN 15
 
 // Wakeup Sources
-// PIR Sensor and Fingerprint IRQ are used as wakeup sources
-// TODO: Think about removing Fingerprint IRQ as wakeup source
+// PIR Sensor is used as wakeup sources
 
-#define WAKEUP_PIN_BITMASK 0xA000  // 2^13 + 2^15
+#define WAKEUP_PIN_BITMASK 0x8000  // HEX(2^15)
 
 #endif  // PIN_DEFINITIONS_H

@@ -21,16 +21,18 @@ char hex_char[17] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B',
  */
 #if defined(ESP32)
 SFM_Module::SFM_Module(uint8_t vccPin, uint8_t irqPin, uint8_t rxPin, uint8_t txPin, uint8_t uartIndex) : sfmSerial(uartIndex), vcc_pin(vccPin), irq_pin(irqPin), rx_pin(rxPin), tx_pin(txPin) {
-    pinMode(irq_pin, INPUT_PULLDOWN);
-    // pinMode(vcc_pin, OUTPUT);
-    // digitalWrite(vcc_pin, HIGH);  // Enable sensor vcc
+    if (irq_pin != -1)
+        pinMode(irq_pin, INPUT_PULLDOWN);
+    pinMode(vcc_pin, OUTPUT);
+    digitalWrite(vcc_pin, HIGH);  // Enable sensor vcc
     cmdBuffer[0] = 0xF5;
     cmdBuffer[7] = 0xF5;
     sfmSerial.begin(115200, SERIAL_8N1, rx_pin, tx_pin);
 }
 #elif defined(ARDUINO_AVR_PROMICRO16)
 SFM_Module::SFM_Module(uint8_t vccPin, uint8_t irqPin, HardwareSerial &hs) : sfmSerial(hs), vcc_pin(vccPin), irq_pin(irqPin) {
-    pinMode(irq_pin, INPUT);
+    if (irq_pin != -1)
+        pinMode(irq_pin, INPUT);
     pinMode(vcc_pin, OUTPUT);
     digitalWrite(vcc_pin, HIGH);  // Enable sensor vcc
     cmdBuffer[0] = 0xF5;
@@ -41,7 +43,8 @@ SFM_Module::SFM_Module(uint8_t vccPin, uint8_t irqPin, HardwareSerial &hs) : sfm
 }
 #else
 SFM_Module::SFM_Module(uint8_t vccPin, uint8_t irqPin, uint8_t rxPin, uint8_t txPin, uint8_t uartIndex) : sfmSerial(rxPin, txPin), vcc_pin(vccPin), irq_pin(irqPin), rx_pin(rxPin), tx_pin(txPin) {
-    pinMode(irq_pin, INPUT);
+    if (irq_pin != -1)
+        pinMode(irq_pin, INPUT);
     pinMode(vcc_pin, OUTPUT);
     digitalWrite(vcc_pin, HIGH);  // Enable sensor vcc
     cmdBuffer[0] = 0xF5;
@@ -50,7 +53,8 @@ SFM_Module::SFM_Module(uint8_t vccPin, uint8_t irqPin, uint8_t rxPin, uint8_t tx
 }
 #endif
 SFM_Module::~SFM_Module() {
-    detachInterrupt(irq_pin);
+    if (irq_pin != -1)
+        detachInterrupt(irq_pin);
 }
 /*!
     @brief Set outside ring's LED color
@@ -145,6 +149,16 @@ uint8_t SFM_Module::recognition_1vN(uint16_t &returnUid) {
     return SFM_ACK_FAIL;
 }
 /*!
+    @brief Detect if finger is pressed
+    @return True if pressed
+            False if not pressed
+ */
+bool SFM_Module::isFingerPressed() {
+    uint8_t ackType, q1, q2, q3;
+    q3 = sendCmd(0x30, 0x00, 0x00, 0x00, ackType, q1, q2);
+    return q3 == SFM_ACK_SUCCESS;
+}
+/*!
     @brief Stop all current actions
     @return SFM_ACK_SUCCESS if successfully stopped
             SFM_ACK_IDLE if module is idle
@@ -222,6 +236,7 @@ uint8_t SFM_Module::sendCmd(uint8_t cmdType, uint8_t p1, uint8_t p2, uint8_t p3,
     return SFM_ACK_SERIALTIMEOUT;
 }
 void SFM_Module::setPinInterrupt(void (*pinInt)(void)) {
+    if (irq_pin == -1) return;
     attachInterrupt(digitalPinToInterrupt(irq_pin), pinInt, CHANGE);
 }
 #if defined(ESP32)
@@ -230,9 +245,11 @@ void IRAM_ATTR SFM_Module::pinInterrupt()
 void SFM_Module::pinInterrupt()
 #endif
 {
+    if (irq_pin == -1) return;
     touched = digitalRead(irq_pin);
 }
 bool SFM_Module::isTouched() {
+    if (irq_pin == -1) return isFingerPressed();
     return touched;
 }
 bool SFM_Module::isConnected() {
@@ -240,11 +257,11 @@ bool SFM_Module::isConnected() {
     return uuid.length() == 18;
 }
 void SFM_Module::enable() {
-    // digitalWrite(vcc_pin, HIGH);
+    digitalWrite(vcc_pin, HIGH);
     return;
 }
 void SFM_Module::disable() {
-    // digitalWrite(vcc_pin, LOW);
+    digitalWrite(vcc_pin, LOW);
     return;
 }
 // result = xor checksum buffer[1:5]
