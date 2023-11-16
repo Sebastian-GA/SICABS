@@ -10,7 +10,6 @@
 #include <Arduino.h>
 #include <Keypad.h>
 #include <Keypad_I2C.h>
-#include <WiFi.h>
 #include <Wire.h>
 
 #include <sfm.hpp>
@@ -21,6 +20,7 @@
  * DEFINES
  **************************************************************************/
 
+#include "camera.h"
 #include "common.h"
 #include "config.h"
 #include "credentials.h"
