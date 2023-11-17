@@ -135,7 +135,10 @@ void wifiEvent(WiFiEvent_t event) {
  */
 void sendPicture(void* parameters) {
     while (true) {
-        if (connected) {
+        if (!connected) {
+            connectToWifi();
+            delay(1000);
+        } else {
             if (!client.available()) {
                 client.connect(websockets_server_host, websockets_server_port, "/camera");
                 delay(100);
@@ -158,9 +161,6 @@ void sendPicture(void* parameters) {
 
             client.sendBinary((const char*)fb->buf, fb->len);
             esp_camera_fb_return(fb);
-        } else {
-            connectToWifi();
-            delay(1000);
         }
     }
 }
