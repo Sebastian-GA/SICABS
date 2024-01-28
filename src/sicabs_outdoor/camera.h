@@ -14,9 +14,16 @@
 #include "credentials.h"
 #include "pin_definitions.h"
 
+using namespace websockets;
+
 void initCamera();
 void connectToWifi();
+void connectToServer();
 void wifiEvent(WiFiEvent_t event);
+void onMessageCallback(WebsocketsMessage message);
+void onEventsCallback(WebsocketsEvent event, String data);
 void sendPicture(void* parameters);
+
+bool connected;
 
 #endif

@@ -9,38 +9,36 @@ const char* wifi_ssid = WIFI_SSID;
 const char* wifi_password = WIFI_PASSWORD;
 const char* websockets_server_host = SERVER_HOST;
 const uint16_t websockets_server_port = SERVER_PORT;
-bool connected = false;
 
-using namespace websockets;
 WebsocketsClient client;
 
-camera_config_t cam_config;
+camera_config_t config;
 
 /**
  * @brief Initialize camera
  *
  */
 void initCamera() {
-    cam_config.ledc_channel = LEDC_CHANNEL_0;
-    cam_config.ledc_timer = LEDC_TIMER_0;
-    cam_config.pin_d0 = Y2_GPIO_NUM;
-    cam_config.pin_d1 = Y3_GPIO_NUM;
-    cam_config.pin_d2 = Y4_GPIO_NUM;
-    cam_config.pin_d3 = Y5_GPIO_NUM;
-    cam_config.pin_d4 = Y6_GPIO_NUM;
-    cam_config.pin_d5 = Y7_GPIO_NUM;
-    cam_config.pin_d6 = Y8_GPIO_NUM;
-    cam_config.pin_d7 = Y9_GPIO_NUM;
-    cam_config.pin_xclk = XCLK_GPIO_NUM;
-    cam_config.pin_pclk = PCLK_GPIO_NUM;
-    cam_config.pin_vsync = VSYNC_GPIO_NUM;
-    cam_config.pin_href = HREF_GPIO_NUM;
-    cam_config.pin_sscb_sda = SIOD_GPIO_NUM;
-    cam_config.pin_sscb_scl = SIOC_GPIO_NUM;
-    cam_config.pin_pwdn = PWDN_GPIO_NUM;
-    cam_config.pin_reset = RESET_GPIO_NUM;
-    cam_config.xclk_freq_hz = 20000000;        // 10000000
-    cam_config.pixel_format = PIXFORMAT_JPEG;  // YUV422, GRAYSCALE, RGB565, JPEG
+    config.ledc_channel = LEDC_CHANNEL_0;
+    config.ledc_timer = LEDC_TIMER_0;
+    config.pin_d0 = Y2_GPIO_NUM;
+    config.pin_d1 = Y3_GPIO_NUM;
+    config.pin_d2 = Y4_GPIO_NUM;
+    config.pin_d3 = Y5_GPIO_NUM;
+    config.pin_d4 = Y6_GPIO_NUM;
+    config.pin_d5 = Y7_GPIO_NUM;
+    config.pin_d6 = Y8_GPIO_NUM;
+    config.pin_d7 = Y9_GPIO_NUM;
+    config.pin_xclk = XCLK_GPIO_NUM;
+    config.pin_pclk = PCLK_GPIO_NUM;
+    config.pin_vsync = VSYNC_GPIO_NUM;
+    config.pin_href = HREF_GPIO_NUM;
+    config.pin_sccb_sda = SIOD_GPIO_NUM;
+    config.pin_sccb_scl = SIOC_GPIO_NUM;
+    config.pin_pwdn = PWDN_GPIO_NUM;
+    config.pin_reset = RESET_GPIO_NUM;
+    config.xclk_freq_hz = 10000000;        // 10000000
+    config.pixel_format = PIXFORMAT_JPEG;  // YUV422, GRAYSCALE, RGB565, JPEG
 
     // init with high specs to pre-allocate larger buffers
 
@@ -53,17 +51,21 @@ void initCamera() {
     // FRAMESIZE_SXGA(1280 x 1024)
 
     if (psramFound()) {
-        cam_config.frame_size = FRAMESIZE_QVGA;
-        cam_config.jpeg_quality = 10;  // 0-63 lower number means higher quality
-        cam_config.fb_count = 2;
+        config.frame_size = FRAMESIZE_VGA;
+        config.jpeg_quality = 10;  // 0-63 lower number means higher quality
+        config.fb_count = 2;
+        config.grab_mode = CAMERA_GRAB_LATEST;
+        config.fb_location = CAMERA_FB_IN_PSRAM;
     } else {
-        cam_config.frame_size = FRAMESIZE_SVGA;
-        cam_config.jpeg_quality = 12;
-        cam_config.fb_count = 1;
+        config.frame_size = FRAMESIZE_VGA;
+        config.jpeg_quality = 15;
+        config.fb_count = 1;
+        config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+        config.fb_location = CAMERA_FB_IN_DRAM;
     }
 
     // Init Camera
-    esp_err_t err = esp_camera_init(&cam_config);
+    esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK) {
         Serial.printf("Camera init failed with error 0x%x", err);
         return;
@@ -90,7 +92,7 @@ void initCamera() {
     s->set_raw_gma(s, 1);                     // 0 = disable , 1 = enable
     s->set_lenc(s, 1);                        // 0 = disable , 1 = enable
     s->set_hmirror(s, 0);                     // 0 = disable , 1 = enable
-    s->set_vflip(s, 0);                       // 0 = disable , 1 = enable
+    s->set_vflip(s, 1);                       // 0 = disable , 1 = enable
     s->set_dcw(s, 1);                         // 0 = disable , 1 = enable
     s->set_colorbar(s, 0);                    // 0 = disable , 1 = enable
 }
@@ -104,9 +106,34 @@ void connectToWifi() {
 
     WiFi.disconnect(true);
     WiFi.onEvent(wifiEvent);
+    connected = false;
     WiFi.begin(wifi_ssid, wifi_password);
 
     Serial.println("Waiting for WIFI connection...");
+    while (!connected) {
+        delay(100);
+    }
+}
+
+/**
+ * @brief Connect to server
+ *
+ */
+void connectToServer() {
+    Serial.println("Connecting to server: " + String(websockets_server_host) + ":" + String(websockets_server_port));
+
+    client.onMessage(onMessageCallback);
+    client.onEvent(onEventsCallback);
+
+    while (!client.connect(websockets_server_host, websockets_server_port, "/")) {
+        Serial.println("Not Connected! Retrying connection...");
+        delay(100);
+    }
+
+    if (client.available()) {
+        client.send("Hello Server");
+        client.ping();
+    }
 }
 
 /**
@@ -128,39 +155,67 @@ void wifiEvent(WiFiEvent_t event) {
     }
 }
 
+void onMessageCallback(WebsocketsMessage message) {
+    Serial.print("Got Message: ");
+    Serial.println(message.data());
+}
+
+void onEventsCallback(WebsocketsEvent event, String data) {
+    if (event == WebsocketsEvent::ConnectionOpened) {
+        Serial.println("Connnection Opened");
+    } else if (event == WebsocketsEvent::ConnectionClosed) {
+        Serial.println("Connnection Closed");
+        Serial.println(client.getCloseReason());
+    } else if (event == WebsocketsEvent::GotPing) {
+        Serial.println("Got a Ping!");
+    } else if (event == WebsocketsEvent::GotPong) {
+        Serial.println("Got a Pong!");
+    }
+}
+
 /**
- * @brief Send picture to server
+ * @brief Send picture to server task
  *
  * @param parameters
  */
 void sendPicture(void* parameters) {
     while (true) {
-        if (!connected) {
-            connectToWifi();
-            delay(1000);
-        } else {
-            if (!client.available()) {
-                client.connect(websockets_server_host, websockets_server_port, "/camera");
-                delay(100);
-            }
+        // if (!connected) {
+        //     connectToWifi();
+        //     while (!connected) {
+        //         delay(100);
+        //     }
+        // }
 
+        // bool connected_ws = client.connect(websockets_server_host, websockets_server_port, "/");
+        // Serial.println(connected_ws);
+        // if (connected_ws) {
+        // }
+
+        if (client.available()) {
             camera_fb_t* fb = NULL;
             esp_err_t res = ESP_OK;
+            uint32_t t = micros();
             fb = esp_camera_fb_get();
+            t = micros() - t;
+            Serial.printf("Camera capture time (ms): %d\n", t);
+
             if (!fb) {
                 Serial.println("Camera capture failed");
                 esp_camera_fb_return(fb);
-                return;
             }
 
-            if (fb->format != PIXFORMAT_JPEG) {
-                Serial.println("PIXFORMAT_JPEG not implemented");
-                esp_camera_fb_return(fb);
-                return;
-            }
-
+            t = micros();
             client.sendBinary((const char*)fb->buf, fb->len);
+            t = micros() - t;
+            Serial.printf("Websocket send time (ms): %d\n", t);
             esp_camera_fb_return(fb);
+
+            // client.send("Hello Server");
+            // delay(1000);
+            client.poll();
         }
+
+        // delay(100);
     }
 }

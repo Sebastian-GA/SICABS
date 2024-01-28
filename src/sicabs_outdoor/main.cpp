@@ -141,6 +141,23 @@ void setup() {
     // esp_now_peer_info_t peerInfo;
     // memcpy(peerInfo.peer_addr, ESP_IN_WIFI_MAC, 6
 
+    // ============== CAMERA ==============
+    // Init camera
+    initCamera();
+    // Connect to WiFi and Server
+    connectToWifi();
+    connectToServer();
+    // TODO: Create task to send picture
+    // xTaskCreatePinnedToCore(
+    //     sendPicture,      // Function to be called
+    //     "Send Picture",   // Name of the task
+    //     100000,           // Stack size in bytes  // TODO: Verify this value
+    //     NULL,             // Task input parameter
+    //     1,                // Priority of the task
+    //     NULL,             // Task handle
+    //     1);               // Core where the task should run (0 or 1)
+
+    // ============== FSM ==============
     FSMCurrentState = FSM_TOCK_TOCK;
 }
 
@@ -162,8 +179,13 @@ void loop() {
                 Serial.println("Tock tock");
             }
 
-            // TODO: Start streaming video
             // TODO: Send tock tock signal via ESP-NOW
+            // First send this signal to indicate the other esp to turn-on the screen
+
+            // TODO: Start streaming video
+            // This is already done when the task is created
+            // Maybe is neccessary to create a batton to indicate when
+            // ir ready (is in this state: FSM_TOCK_TOCK) and then start streaming
 
             FSMCurrentState = FSM_WAIT_FOR_INPUT;
             break;
@@ -244,6 +266,7 @@ void loop() {
             }
 
             Serial.println(passwordBuffer);
+            // TODO: Validate Password
 
             break;
 
@@ -276,6 +299,9 @@ void goToSleep(TimerHandle_t xTimer) {
 
     SFM.setRingColor(SFM_RING_OFF, SFM_RING_OFF);
     SFM.disable();
+
+    // TODO: Handle Wi-Fi and Stop Streaming
+    // Is this neccessary?
 
     esp_deep_sleep_start();
 }
