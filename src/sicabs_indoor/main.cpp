@@ -10,7 +10,7 @@
 
 #include "common.h"
 #include "config.h"
-#include "credentials.h"
+#include "credentials_template.h"
 #include "gfx/LGFX_ESP32S3_RGB_MakerfabsParallelTFTwithTouch70.h"
 
 LGFX gfx;

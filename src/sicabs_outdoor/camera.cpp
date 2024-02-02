@@ -4,7 +4,7 @@
  */
 
 #include "camera.h"
-
+bool connected;
 const char* wifi_ssid = WIFI_SSID;
 const char* wifi_password = WIFI_PASSWORD;
 const char* websockets_server_host = SERVER_HOST;

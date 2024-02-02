@@ -11,7 +11,7 @@
 #include <WiFi.h>
 #include <esp_camera.h>
 
-#include "credentials.h"
+#include "credentials_template.h"
 #include "pin_definitions.h"
 
 using namespace websockets;
@@ -24,6 +24,6 @@ void onMessageCallback(WebsocketsMessage message);
 void onEventsCallback(WebsocketsEvent event, String data);
 void sendPicture(void* parameters);
 
-bool connected;
+// bool connected;
 
 #endif

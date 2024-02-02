@@ -23,7 +23,7 @@
 #include "camera.h"
 #include "common.h"
 #include "config.h"
-#include "credentials.h"
+#include "credentials_template.h"
 #include "pin_definitions.h"
 
 /**************************************************************************

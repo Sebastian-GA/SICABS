@@ -6,7 +6,7 @@
 .vscode/ipch
 
 # Tests
-src/test
+src/test*
 
 # Credentials
 credentials.h
