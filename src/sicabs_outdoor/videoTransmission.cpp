@@ -1,18 +1,98 @@
-/**
- * @file camera.cpp
- * @brief Camera related functions
- */
+#include <Arduino.h>
+#include <ArduinoWebsockets.h>
+#include <WiFi.h>
+#include <esp_camera.h>
 
-#include "camera.h"
-bool connected;
+#include "credentials.h"
+#include "pin_definitions.h"
+#include "tasks.hpp"
+using namespace websockets;
+
+/**************************************************************************
+ * FUNCTION DECLARATIONS
+ **************************************************************************/
+void initCamera();
+void connectToWifi();
+void wifiEvent(WiFiEvent_t event);
+void onMessageCallback(WebsocketsMessage message);
+void onEventsCallback(WebsocketsEvent event, String data);
+
+/**************************************************************************
+ * CREDENTIALS
+ **************************************************************************/
 const char* wifi_ssid = WIFI_SSID;
 const char* wifi_password = WIFI_PASSWORD;
 const char* websockets_server_host = SERVER_HOST;
 const uint16_t websockets_server_port = SERVER_PORT;
+bool connected = false;
 
 WebsocketsClient client;
 
 camera_config_t config;
+
+void videoTransmission(void* parameter) {
+    initCamera();
+    connectToWifi();
+    while (!connected) {
+        delay(100);
+    }
+
+    client.onMessage(onMessageCallback);
+    client.onEvent(onEventsCallback);
+
+    while (!client.connect(websockets_server_host, websockets_server_port, "/")) {
+        Serial.println("Not Connected! Retrying connection...");
+        delay(100);
+    }
+
+    if (client.available()) {
+        client.send("Hello Server");
+        client.ping();
+    }
+    for (;;) {
+        if (client.available()) {
+            camera_fb_t* fb = NULL;
+            esp_err_t res = ESP_OK;
+            uint32_t t = micros();
+            fb = esp_camera_fb_get();
+            t = micros() - t;
+            Serial.printf("Camera capture time (ms): %d\n", t);
+
+            if (!fb) {
+                // Serial.println("Camera capture failed");
+                esp_camera_fb_return(fb);
+            }
+
+            t = micros();
+            client.sendBinary((const char*)fb->buf, fb->len);
+            t = micros() - t;
+            Serial.printf("Websocket send time (ms): %d\n", t);
+            esp_camera_fb_return(fb);
+
+            // client.send("Hello Server");
+            // delay(1000);
+            client.poll();
+        }
+    }
+}
+
+void onMessageCallback(WebsocketsMessage message) {
+    Serial.print("Got Message: ");
+    Serial.println(message.data());
+}
+
+void onEventsCallback(WebsocketsEvent event, String data) {
+    if (event == WebsocketsEvent::ConnectionOpened) {
+        Serial.println("Connnection Opened");
+    } else if (event == WebsocketsEvent::ConnectionClosed) {
+        Serial.println("Connnection Closed");
+        Serial.println(client.getCloseReason());
+    } else if (event == WebsocketsEvent::GotPing) {
+        Serial.println("Got a Ping!");
+    } else if (event == WebsocketsEvent::GotPong) {
+        Serial.println("Got a Pong!");
+    }
+}
 
 /**
  * @brief Initialize camera
@@ -106,34 +186,9 @@ void connectToWifi() {
 
     WiFi.disconnect(true);
     WiFi.onEvent(wifiEvent);
-    connected = false;
     WiFi.begin(wifi_ssid, wifi_password);
 
     Serial.println("Waiting for WIFI connection...");
-    while (!connected) {
-        delay(100);
-    }
-}
-
-/**
- * @brief Connect to server
- *
- */
-void connectToServer() {
-    Serial.println("Connecting to server: " + String(websockets_server_host) + ":" + String(websockets_server_port));
-
-    client.onMessage(onMessageCallback);
-    client.onEvent(onEventsCallback);
-
-    while (!client.connect(websockets_server_host, websockets_server_port, "/")) {
-        Serial.println("Not Connected! Retrying connection...");
-        delay(100);
-    }
-
-    if (client.available()) {
-        client.send("Hello Server");
-        client.ping();
-    }
 }
 
 /**
@@ -152,70 +207,5 @@ void wifiEvent(WiFiEvent_t event) {
             Serial.println("WiFi lost connection");
             connected = false;
             break;
-    }
-}
-
-void onMessageCallback(WebsocketsMessage message) {
-    Serial.print("Got Message: ");
-    Serial.println(message.data());
-}
-
-void onEventsCallback(WebsocketsEvent event, String data) {
-    if (event == WebsocketsEvent::ConnectionOpened) {
-        Serial.println("Connnection Opened");
-    } else if (event == WebsocketsEvent::ConnectionClosed) {
-        Serial.println("Connnection Closed");
-        Serial.println(client.getCloseReason());
-    } else if (event == WebsocketsEvent::GotPing) {
-        Serial.println("Got a Ping!");
-    } else if (event == WebsocketsEvent::GotPong) {
-        Serial.println("Got a Pong!");
-    }
-}
-
-/**
- * @brief Send picture to server task
- *
- * @param parameters
- */
-void sendPicture(void* parameters) {
-    while (true) {
-        // if (!connected) {
-        //     connectToWifi();
-        //     while (!connected) {
-        //         delay(100);
-        //     }
-        // }
-
-        // bool connected_ws = client.connect(websockets_server_host, websockets_server_port, "/");
-        // Serial.println(connected_ws);
-        // if (connected_ws) {
-        // }
-
-        if (client.available()) {
-            camera_fb_t* fb = NULL;
-            esp_err_t res = ESP_OK;
-            uint32_t t = micros();
-            fb = esp_camera_fb_get();
-            t = micros() - t;
-            Serial.printf("Camera capture time (ms): %d\n", t);
-
-            if (!fb) {
-                Serial.println("Camera capture failed");
-                esp_camera_fb_return(fb);
-            }
-
-            t = micros();
-            client.sendBinary((const char*)fb->buf, fb->len);
-            t = micros() - t;
-            Serial.printf("Websocket send time (ms): %d\n", t);
-            esp_camera_fb_return(fb);
-
-            // client.send("Hello Server");
-            // delay(1000);
-            client.poll();
-        }
-
-        // delay(100);
     }
 }
