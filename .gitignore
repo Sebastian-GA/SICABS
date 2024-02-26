@@ -12,3 +12,5 @@ antes.txt
 
 # Credentials
 credentials.h
+
+*.txt
