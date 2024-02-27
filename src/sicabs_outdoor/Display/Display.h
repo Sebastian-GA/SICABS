@@ -9,6 +9,9 @@ class Display : public Adafruit_SSD1306 {
    public:
     Display();
     bool shown = false;
+
+   private:
+    TwoWire* jwire = &Wire;
 };
 
 #endif

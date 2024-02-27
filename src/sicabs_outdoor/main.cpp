@@ -22,11 +22,10 @@ void setup() {
             ;
     }
     display.display();
-
-    // Keyboard initialization
     keyboard.begin();
 }
 
 void loop() {
-    char key = keyboard.getKey();
+    char keyEntered = keyboard.getKey();
+    if (keyEntered) Serial.println(keyEntered);
 }
