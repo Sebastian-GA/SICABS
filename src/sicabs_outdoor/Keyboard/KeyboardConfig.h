@@ -1,0 +1,6 @@
+#ifndef KEYBOARD_CONFIG_H
+#define KEYBOARD_CONFIG_H
+
+#define PASSWORD "123456"
+
+#endif
