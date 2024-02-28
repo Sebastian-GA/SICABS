@@ -14,18 +14,36 @@ void setup() {
     Serial.begin(SERIAL_BAUD_RATE);
     Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN, FREQUENCY);
 
-    // Display initialization
     bool displayRAMAllocation = display.begin(SSD1306_SWITCHCAPVCC, SCREEN_I2C_ADDRESS);
     if (!displayRAMAllocation) {
-        Serial.println(F("SSD1306 allocation failed"));
+        Serial.println(F("Display allocation failed"));
         for (;;)
             ;
     }
-    display.display();
     keyboard.begin();
 }
 
 void loop() {
     char keyEntered = keyboard.getKey();
-    if (keyEntered) Serial.println(keyEntered);
+    switch (display.state) {
+        case State::MENU:
+            display.drawMenu(keyEntered);
+            break;
+        case State::ENTER_PIN:
+            display.enterPin(keyEntered, keyboard);
+            break;
+        case State::CORRECT_PIN:
+            display.showGrantedAccess();
+            break;
+        case State::INCORRECT_PIN:
+            break;
+        case State::ENTER_FINGERPRINT:
+            break;
+        case State::CORRECT_FINGERPRINT:
+            break;
+        case State::INCORRECT_FINGERPRINT:
+            break;
+        default:
+            break;
+    }
 }

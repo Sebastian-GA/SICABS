@@ -13,3 +13,25 @@ static byte colPins[KEYPAD_COLS] = {2, 0, 5};  // COL0 -> P2, COL1 -> P0, COL2 -
 
 Keyboard::Keyboard() : Keypad_I2C(makeKeymap(KEYPAD_KEYS), rows, colPins, KEYPAD_ROWS, KEYPAD_COLS, KEYPAD_I2C_ADDRESS, PCF8574, &Wire) {
 }
+
+void Keyboard::deletePasswordDigit() {
+    if (inputPassword.size() > 0)
+        inputPassword.pop_back();
+}
+
+int Keyboard::getPasswordLength() {
+    return inputPassword.size();
+}
+
+void Keyboard::clearPassword() {
+    inputPassword.clear();
+}
+
+void Keyboard::writePasswordDigit(char digit) {
+    if (inputPassword.size() < 6)
+        inputPassword.push_back(digit);
+}
+
+int Keyboard::getAttempts() {
+    return attempts;
+}
