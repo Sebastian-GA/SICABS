@@ -14,3 +14,4 @@ antes.txt
 credentials.h
 
 *.txt
+/trash

@@ -32,6 +32,21 @@ void Keyboard::writePasswordDigit(char digit) {
         inputPassword.push_back(digit);
 }
 
+bool Keyboard::checkEnteredPassword() {
+    std::string inputPassword2String(inputPassword.begin(), inputPassword.end());
+    return inputPassword2String.compare(password) == 0;
+}
+
 int Keyboard::getAttempts() {
     return attempts;
+}
+
+void Keyboard::removeAttempt() {
+    if (attempts > 0) {
+        attempts = attempts - 1;
+    }
+}
+
+void Keyboard::resetAttempts() {
+    attempts = 3;
 }

@@ -21,6 +21,8 @@ void setup() {
             ;
     }
     keyboard.begin();
+    delay(50);
+    Serial.print(display.state);
 }
 
 void loop() {
@@ -33,15 +35,19 @@ void loop() {
             display.enterPin(keyEntered, keyboard);
             break;
         case State::CORRECT_PIN:
-            display.showGrantedAccess();
+            display.showAccessGranted(keyboard);
             break;
         case State::INCORRECT_PIN:
+            display.showAccessDenied(keyboard);
             break;
         case State::ENTER_FINGERPRINT:
             break;
         case State::CORRECT_FINGERPRINT:
             break;
         case State::INCORRECT_FINGERPRINT:
+            break;
+        case State::FAILED_ATTEMPTS:
+            display.failedAttemptsCountdown(keyboard);
             break;
         default:
             break;
