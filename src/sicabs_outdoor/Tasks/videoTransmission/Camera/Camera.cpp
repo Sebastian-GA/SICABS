@@ -87,3 +87,20 @@ void Camera::wifiEvent(WiFiEvent_t event) {
             break;
     }
 }
+
+void Camera::connectClient() {
+    while (!client.connect(SERVER_HOST, SERVER_PORT, "/")) {
+        Serial.println("Unable to connect. Retrying...");
+        delay(100);
+    }
+}
+
+void Camera::sendImageToIndoor() {
+    if (client.available()) {
+        camera_fb_t* fb = NULL;
+        fb = esp_camera_fb_get();
+        client.sendBinary((const char*)fb->buf, fb->len);
+        esp_camera_fb_return(fb);
+        client.poll();
+    }
+}

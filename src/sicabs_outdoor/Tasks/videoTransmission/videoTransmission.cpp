@@ -16,8 +16,10 @@ void videoTransmission(void* parameter) {
 
     camera.initCamera();
     camera.connectToWifi();
+    camera.connectClient();
 
     while (1) {
+        camera.sendImageToIndoor();
         if (xSemaphoreTake(mutex, 0) == pdTRUE) {
             xSemaphoreGive(mutex);
         } else {

@@ -31,5 +31,7 @@
 
 #define WIFI_SSID "your_wifi_ssid"
 #define WIFI_PASSWORD "your_wifi_password"
+#define SERVER_HOST "192.168.4.1"
+#define SERVER_PORT 8888
 
 #endif
