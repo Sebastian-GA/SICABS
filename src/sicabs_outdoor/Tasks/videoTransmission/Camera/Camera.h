@@ -16,6 +16,7 @@ class Camera {
     static void wifiEvent(WiFiEvent_t event);
     void connectClient();
     void sendImageToIndoor();
+    void sendTextToIndoor();
 
    private:
     camera_config_t cameraConfiguration;
