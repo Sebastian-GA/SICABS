@@ -2,7 +2,7 @@
 
 #include "./Tasks/Tasks.hpp"
 
-int shared_var = 0;
+int sharedVar = 0;
 SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
 
 void setup() {

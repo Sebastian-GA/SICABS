@@ -2,17 +2,30 @@
 
 #include "./../Tasks.hpp"
 
-extern int shared_var;
+extern int sharedVar;
 extern SemaphoreHandle_t mutex;
 
 void videoTransmission(void* parameter) {
-    int local_var;
+    Serial.begin(115200);
+    int localVar;
     while (1) {
-        while (!xSemaphoreTake(mutex, 0) != pdTRUE) {
-            ;
+        if (xSemaphoreTake(mutex, 0) == pdTRUE) {
+            Serial.print("hi from videoTransmission: ");
+            Serial.println(sharedVar);
+
+            // check flag
+            // if (display.sendSignal) {
+            //     // increment shared variable
+            //     localVar = shared_var;
+            //     localVar++;
+            //     vTaskDelay(500 / portTICK_PERIOD_MS);
+            //     shared_var = localVar;
+
+            //     // toggle send flag
+            //     display.sendSignal = false;
+            // }
+            xSemaphoreGive(mutex);
+        } else {
         }
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-        Serial.println(shared_var);
-        xSemaphoreGive(mutex);
     }
 }

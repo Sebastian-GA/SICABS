@@ -57,14 +57,17 @@ void Display::showAccessGranted(Keyboard& keyboard) {
         Adafruit_SSD1306::print(F("granted"));
 
         Adafruit_SSD1306::display();
-        shown = true;
-        startingTime = millis();
         keyboard.resetAttempts();
+        startingTime = millis();
+
+        if (!sendSignal)
+            sendSignal = true;
+
+        shown = true;
     }
     if (millis() >= startingTime + delayShow) {
         state = State::MENU;
         shown = false;
-        toggleSent();
     }
 }
 
@@ -151,10 +154,10 @@ void Display::failedAttemptsCountdown(Keyboard& keyboard) {
     }
 }
 
-bool Display::isSent() {
-    return sent;
-}
+// bool Display::sendSignalFlag() {
+//     return sendSignal;
+// }
 
-void Display::toggleSent() {
-    sent = !sent;
-}
+// void Display::toggleSendSignalFlag() {
+//     sendSignal = !sendSignal;
+// }

@@ -11,7 +11,7 @@
 Display display;
 Keyboard keyboard;
 
-extern int shared_var;
+extern int sharedVar;
 extern SemaphoreHandle_t mutex;
 
 void userInteraction(void* parameter) {
@@ -40,6 +40,8 @@ void userInteraction(void* parameter) {
                 break;
             case State::CORRECT_PIN:
                 display.showAccessGranted(keyboard);
+                // if (!display.sendSignal)
+                //     display.sendSignal = !display.sendSignal;
                 break;
             case State::INCORRECT_PIN:
                 display.showAccessDenied(keyboard);
@@ -57,10 +59,22 @@ void userInteraction(void* parameter) {
                 break;
         }
         if (xSemaphoreTake(mutex, 0) == pdTRUE) {
-            localVar = shared_var;
-            localVar++;
-            vTaskDelay(500 / portTICK_PERIOD_MS);
-            shared_var = localVar;
+            // check flag
+            if (!display.sendSignal) {
+                Serial.println("there's no signal");
+                //     // increment shared variable
+                //     localVar = shared_var;
+                //     localVar++;
+                //     vTaskDelay(500 / portTICK_PERIOD_MS);
+                //     shared_var = localVar;
+
+                //     // toggle send flag
+                //     display.sendSignal = false;
+            } else {
+                display.sendSignal = false;
+                Serial.println("there IS signal");
+                sharedVar++;
+            }
             xSemaphoreGive(mutex);
         } else {
         }
