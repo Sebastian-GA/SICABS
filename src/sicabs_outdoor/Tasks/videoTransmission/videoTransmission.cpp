@@ -2,6 +2,8 @@
 
 #include "./../Tasks.hpp"
 #include "./Camera/Camera.h"
+// void connectToWiFi();
+// void wifiEvent(WiFiEvent_t event);
 
 extern int sharedVar;
 extern SemaphoreHandle_t mutex;

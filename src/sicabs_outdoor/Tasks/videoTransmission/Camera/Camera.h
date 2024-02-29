@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include <Arduino.h>
+#include <ArduinoWebsockets.h>
 #include <WiFi.h>
 #include <esp_camera.h>
 
@@ -12,11 +13,12 @@ class Camera {
     Camera();
     void initCamera();
     void connectToWifi();
-    void wifiEvent(WiFiEvent_t event);
+    static void wifiEvent(WiFiEvent_t event);
 
    private:
     camera_config_t cameraConfiguration;
     sensor_t* cameraSensor;
+    websockets::WebsocketsClient client;
 };
 
 #endif

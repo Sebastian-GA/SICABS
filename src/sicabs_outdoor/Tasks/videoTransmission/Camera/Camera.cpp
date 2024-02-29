@@ -72,7 +72,18 @@ void Camera::initCamera() {
 
 void Camera::connectToWifi() {
     WiFi.disconnect(true);
+    WiFi.onEvent(wifiEvent);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 }
 
 void Camera::wifiEvent(WiFiEvent_t event) {
+    switch (event) {
+        case SYSTEM_EVENT_STA_GOT_IP:
+            Serial.print("WiFi connected! IP address: ");
+            Serial.println(WiFi.localIP());
+            break;
+        case SYSTEM_EVENT_STA_DISCONNECTED:
+            Serial.println("WiFi lost connection");
+            break;
+    }
 }

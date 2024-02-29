@@ -2,7 +2,7 @@
 
 #include "tasks.hpp"
 
-TaskHandle_t led;
+// TaskHandle_t led;
 TaskHandle_t video;
 
 void setup() {
@@ -17,9 +17,9 @@ void setup() {
         Serial.println("video not allocated :(");
     }
 
-    if (xTaskCreatePinnedToCore(blinkLED, "blink LED", 100000, NULL, 1, &led, 0) != pdPASS) {
-        Serial.println("LED blinking not allocated :(");
-    }
+    // if (xTaskCreatePinnedToCore(blinkLED, "blink LED", 100000, NULL, 1, &led, 0) != pdPASS) {
+    //     Serial.println("LED blinking not allocated :(");
+    // }
 
     vTaskDelete(NULL);
 }
