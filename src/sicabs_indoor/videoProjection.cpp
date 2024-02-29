@@ -30,6 +30,11 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap);
 void onMessageCallback(WebsocketsMessage message) {
     // Serial.print("Got Message: ");
     // Serial.println(message.data());
+    if (message.isText()) {
+        Serial.println("Just got a message :)");
+        Serial.print("The message is: ");
+        Serial.println(message.c_str());
+    }
 
     // uint32_t t = millis();
     TJpgDec.drawJpg(0, 0, (const uint8_t*)message.c_str(), message.length());

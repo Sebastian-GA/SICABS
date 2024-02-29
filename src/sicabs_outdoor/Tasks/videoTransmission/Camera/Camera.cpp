@@ -107,6 +107,7 @@ void Camera::sendImageToIndoor() {
 
 void Camera::sendTextToIndoor() {
     if (client.available()) {
-        client.send("Hola");
+        client.send("OPEN");
+        client.poll();
     }
 }

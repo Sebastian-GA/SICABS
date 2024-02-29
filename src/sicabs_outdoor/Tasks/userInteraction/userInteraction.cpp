@@ -11,7 +11,7 @@
 Display display;
 Keyboard keyboard;
 
-extern int sharedVar;
+extern bool sendOpen;
 extern SemaphoreHandle_t mutex;
 
 void userInteraction(void* parameter) {
@@ -60,7 +60,7 @@ void userInteraction(void* parameter) {
             if (!display.sendSignal) {
             } else {
                 display.sendSignal = false;
-                sharedVar++;
+                sendOpen = true;
             }
             xSemaphoreGive(mutex);
         } else {
