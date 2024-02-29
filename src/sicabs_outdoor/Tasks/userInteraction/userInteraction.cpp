@@ -11,6 +11,12 @@
 Display display;
 Keyboard keyboard;
 
+extern int shared_var;
+extern SemaphoreHandle_t mutex;
+
+int* shared_var_ptr = &shared_var;
+SemaphoreHandle_t* mutex_ptr = &mutex;
+
 void userInteraction(void* parameter) {
     Serial.begin(SERIAL_BAUD_RATE);
     Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN, FREQUENCY);

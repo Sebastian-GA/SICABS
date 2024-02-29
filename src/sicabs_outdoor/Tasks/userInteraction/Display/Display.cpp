@@ -47,6 +47,7 @@ void Display::drawPin(int digits, int attempts) {
 
 void Display::showAccessGranted(Keyboard& keyboard) {
     if (!shown) {
+        int localVar;
         Adafruit_SSD1306::clearDisplay();
         Adafruit_SSD1306::setTextSize(2);
         Adafruit_SSD1306::setTextColor(WHITE);
