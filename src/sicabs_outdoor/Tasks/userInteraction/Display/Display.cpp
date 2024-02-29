@@ -64,6 +64,7 @@ void Display::showAccessGranted(Keyboard& keyboard) {
     if (millis() >= startingTime + delayShow) {
         state = State::MENU;
         shown = false;
+        toggleSent();
     }
 }
 
@@ -148,4 +149,12 @@ void Display::failedAttemptsCountdown(Keyboard& keyboard) {
             keyboard.resetAttempts();
         }
     }
+}
+
+bool Display::isSent() {
+    return sent;
+}
+
+void Display::toggleSent() {
+    sent = !sent;
 }

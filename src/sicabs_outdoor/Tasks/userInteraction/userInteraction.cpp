@@ -14,9 +14,6 @@ Keyboard keyboard;
 extern int shared_var;
 extern SemaphoreHandle_t mutex;
 
-int* shared_var_ptr = &shared_var;
-SemaphoreHandle_t* mutex_ptr = &mutex;
-
 void userInteraction(void* parameter) {
     Serial.begin(SERIAL_BAUD_RATE);
     Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN, FREQUENCY);
@@ -30,6 +27,8 @@ void userInteraction(void* parameter) {
     keyboard.begin();
     delay(50);
     Serial.print(display.state);
+    int localVar;
+
     while (1) {
         char keyEntered = keyboard.getKey();
         switch (display.state) {
@@ -56,6 +55,14 @@ void userInteraction(void* parameter) {
                 break;
             default:
                 break;
+        }
+        if (xSemaphoreTake(mutex, 0) == pdTRUE) {
+            localVar = shared_var;
+            localVar++;
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+            shared_var = localVar;
+            xSemaphoreGive(mutex);
+        } else {
         }
     }
 }

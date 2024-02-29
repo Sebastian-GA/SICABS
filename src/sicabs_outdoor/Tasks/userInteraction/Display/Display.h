@@ -21,10 +21,14 @@ class Display : public Adafruit_SSD1306 {
     void failedAttemptsCountdown(Keyboard& keyboard);
     void drawFailedAttemptsCountdown();
 
+    bool isSent();
+    void toggleSent();
+
    private:
     TwoWire* jwire = &Wire;
     int counter = 5;
     int prevCounter = 5;
+    bool sent = false;
 };
 
 #endif
