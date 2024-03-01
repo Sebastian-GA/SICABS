@@ -3,6 +3,8 @@
 #include <TJpg_Decoder.h>
 #include <WiFi.h>
 
+#include <cstring>
+
 #include "common.h"
 #include "config.h"
 #include "credentials_template.h"
@@ -24,21 +26,26 @@ void onMessageCallback(WebsocketsMessage message);
 void onEventsCallback(WebsocketsEvent event, String data);
 bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap);
 
+// ============================ SEMAPHORE =============================
+extern bool openDoor;
+extern SemaphoreHandle_t mutex;
 /**************************************************************************
  * CALLBACK FUNCTIONS
  **************************************************************************/
 void onMessageCallback(WebsocketsMessage message) {
-    // Serial.print("Got Message: ");
-    // Serial.println(message.data());
     if (message.isText()) {
-        Serial.println("Just got a message :)");
-        Serial.print("The message is: ");
-        Serial.println(message.c_str());
+        // while (!connected) {
+        //     Serial.println("n-execution");
+        // Takes mutex for toggling open flag
+        if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+            Serial.println("semaphore has been taken now");
+            openDoor = true;
+            xSemaphoreGive(mutex);
+        } else {
+            Serial.println("not taken yet...");
+        }
     }
-
-    // uint32_t t = millis();
     TJpgDec.drawJpg(0, 0, (const uint8_t*)message.c_str(), message.length());
-    // Serial.printf("Time to decode and display: %dms\n", millis() - t);
 }
 
 void onEventsCallback(WebsocketsEvent event, String data) {
@@ -86,7 +93,38 @@ void videoProjection(void* parameter) {
 
     Serial.print("Video task running on core ");
     Serial.println(xPortGetCoreID());
+
+    // client.onMessage(onMessageCallback);
+
     for (;;) {
+        // client = server.accept();
+        // if (client.available()) {
+        //     Serial.println("its available");
+        //     websockets::WebsocketsMessage msg = client.readBlocking();
+
+        //     Serial.println(msg.data());
+
+        //     // client.close();
+        // } else {
+        //     Serial.println("not found...");
+        // }
+        // vTaskDelay(500 / portTICK_PERIOD_MS);
+
+        // Serial.println("Executed loop...");
+        // if (server.poll()) {
+        //     Serial.println("true");
+        //     client = server.accept();
+        //     client.onMessage(onMessageCallback);
+        // } else {
+        //     Serial.println("false");
+        // }
+
+        // if (client.available()) {
+        //     Serial.println("before poll...");
+        //     client.poll();
+        //     Serial.println("after poll...");
+        // }
+        // vTaskDelay(500 / portTICK_PERIOD_MS);
         if (server.poll()) {
             // if (!client.available()) {  // Always overwrite the client to the new one
             client = server.accept();
