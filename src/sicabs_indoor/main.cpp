@@ -1,7 +1,6 @@
 #include <Arduino.h>
 
-#include "AES128.h"
-#include "tasks.hpp"
+#include "./Tasks/Tasks.hpp"
 
 TaskHandle_t led;
 TaskHandle_t video;
@@ -19,11 +18,11 @@ void setup() {
     Serial.println();
     // mutex = xSemaphoreCreateMutex();
 
-    if (xTaskCreatePinnedToCore(videoProjection, "Video projection", 10000, NULL, 1, &video, 1) != pdPASS) {
+    if (xTaskCreatePinnedToCore(videoReception, "Video projection", 10000, NULL, 1, &video, 1) != pdPASS) {
         Serial.println("video not allocated :(");
     }
 
-    if (xTaskCreatePinnedToCore(blinkLED, "blink LED", 5000, NULL, 1, &led, 0) != pdPASS) {
+    if (xTaskCreatePinnedToCore(lockControl, "blink LED", 5000, NULL, 1, &led, 0) != pdPASS) {
         Serial.println("LED blinking not allocated :(");
     }
 

@@ -1,12 +1,12 @@
 #include <Arduino.h>
 
-#include "tasks.hpp"
+#include "./../tasks.hpp"
 
 // semaphores...
 extern bool openDoor;
 extern SemaphoreHandle_t mutex;
 
-void blinkLED(void *parameter) {
+void lockControl(void *parameter) {
     int time = 5000;
     pinMode(led_pin, OUTPUT);
     digitalWrite(led_pin, LOW);

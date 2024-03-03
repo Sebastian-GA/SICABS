@@ -5,11 +5,11 @@
 
 #include <cstring>
 
+#include "./../tasks.hpp"
+#include "./gfx/LGFX_ESP32S3_RGB_MakerfabsParallelTFTwithTouch70.h"
 #include "common.h"
 #include "config.h"
 #include "credentials_template.h"
-#include "gfx/LGFX_ESP32S3_RGB_MakerfabsParallelTFTwithTouch70.h"
-#include "tasks.hpp"
 /**************************************************************************
  * DEFINITIONS
  **************************************************************************/
@@ -20,7 +20,7 @@ const char* wifi_password = WIFI_PASSWORD;
 
 using namespace websockets;
 WebsocketsServer server;
-WebsocketsClient client;
+WebsocketsClient screenClient;
 
 void onMessageCallback(WebsocketsMessage message);
 void onEventsCallback(WebsocketsEvent event, String data);
@@ -69,7 +69,7 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap) 
 /**************************************************************************
  * Task function
  **************************************************************************/
-void videoProjection(void* parameter) {
+void videoReception(void* parameter) {
     gfx.init();
     gfx.setRotation(0);
     gfx.setColorDepth(16);
@@ -84,58 +84,22 @@ void videoProjection(void* parameter) {
     TJpgDec.setJpgScale(1);
     TJpgDec.setCallback(tft_output);
 
-    // WiFi
+    // 1) Sets access point
     WiFi.softAP(wifi_ssid, wifi_password);
-    IPAddress IP = WiFi.softAPIP();
 
-    // WebSockets
+    // 2) starts to listen to messages
     server.listen(SERVER_PORT);
 
-    Serial.print("Video task running on core ");
+    Serial.print("Video task unning on core ");
     Serial.println(xPortGetCoreID());
+    Serial.println("Looking for a client...");
+    while (!screenClient.available())
+        screenClient = server.accept();
 
-    // client.onMessage(onMessageCallback);
+    Serial.println("We finally found the client ^^");
+    screenClient.onMessage(onMessageCallback);
 
     for (;;) {
-        // client = server.accept();
-        // if (client.available()) {
-        //     Serial.println("its available");
-        //     websockets::WebsocketsMessage msg = client.readBlocking();
-
-        //     Serial.println(msg.data());
-
-        //     // client.close();
-        // } else {
-        //     Serial.println("not found...");
-        // }
-        // vTaskDelay(500 / portTICK_PERIOD_MS);
-
-        // Serial.println("Executed loop...");
-        // if (server.poll()) {
-        //     Serial.println("true");
-        //     client = server.accept();
-        //     client.onMessage(onMessageCallback);
-        // } else {
-        //     Serial.println("false");
-        // }
-
-        // if (client.available()) {
-        //     Serial.println("before poll...");
-        //     client.poll();
-        //     Serial.println("after poll...");
-        // }
-        // vTaskDelay(500 / portTICK_PERIOD_MS);
-        if (server.poll()) {
-            // if (!client.available()) {  // Always overwrite the client to the new one
-            client = server.accept();
-            client.onMessage(onMessageCallback);
-            client.onEvent(onEventsCallback);
-            client.send("Hello Client!");
-            // }
-        }
-
-        if (client.available()) {
-            client.poll();
-        }
+        screenClient.poll();
     }
 }
