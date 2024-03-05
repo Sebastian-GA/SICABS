@@ -17,11 +17,11 @@ class Camera {
     void connectClient();
     void sendImageToIndoor();
     void sendTextToIndoor();
+    websockets::WebsocketsClient client;
 
    private:
     camera_config_t cameraConfiguration;
     sensor_t* cameraSensor;
-    websockets::WebsocketsClient client;
 };
 
 #endif

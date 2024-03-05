@@ -13,6 +13,9 @@ WebsocketsClient client;
 void dataReception(void* parameter) {
     WiFi.softAP(ssid, password);
     IPAddress ip = WiFi.softAPIP();
+
+    // server.listen(4040);
+
     while (1) {
         Serial.print("The IP is: ");
         Serial.println(ip);

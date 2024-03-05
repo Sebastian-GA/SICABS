@@ -57,13 +57,12 @@ void userInteraction(void* parameter) {
                 break;
         }
         if (xSemaphoreTake(mutex, 0) == pdTRUE) {
-            if (!display.sendSignal) {
-            } else {
+            // Tell transmission task that it's time to send the message
+            if (display.sendSignal) {
                 display.sendSignal = false;
                 sendOpen = true;
             }
             xSemaphoreGive(mutex);
-        } else {
         }
     }
 }

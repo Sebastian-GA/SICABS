@@ -29,21 +29,34 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap);
 // ============================ SEMAPHORE =============================
 extern bool openDoor;
 extern SemaphoreHandle_t mutex;
+int a = 0;
+String localMessage;
+int localInt;
+bool sendNow = false;
 /**************************************************************************
  * CALLBACK FUNCTIONS
  **************************************************************************/
 void onMessageCallback(WebsocketsMessage message) {
     if (message.isText()) {
-        // while (!connected) {
-        //     Serial.println("n-execution");
-        // Takes mutex for toggling open flag
-        if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
-            Serial.println("semaphore has been taken now");
-            openDoor = true;
-            xSemaphoreGive(mutex);
-        } else {
-            Serial.println("not taken yet...");
-        }
+        Serial.print("The received number was: ");
+        Serial.println(message.c_str());
+        localMessage = message.c_str();
+        localInt = localMessage.toInt();
+        localInt = localInt + 1;
+        localMessage = String(localInt);
+        Serial.print("Now the incremented number looks like ");
+        Serial.println(localMessage);
+        // screenClient.send("giving back this");
+        sendNow = true;
+
+        // openDoor shared variable set to true (with mutex)
+        // if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+        //     Serial.println("semaphore has been taken now");
+        //     openDoor = true;
+        //     xSemaphoreGive(mutex);
+        // } else {
+        //     Serial.println("not taken yet...");
+        // }
     }
     TJpgDec.drawJpg(0, 0, (const uint8_t*)message.c_str(), message.length());
 }
@@ -100,6 +113,15 @@ void videoReception(void* parameter) {
     screenClient.onMessage(onMessageCallback);
 
     for (;;) {
-        screenClient.poll();
+        // screenClient.send("Saludos desde la pantalla");
+        // Serial.println("I just sent a message from the big screen");
+        if (screenClient.available())
+            screenClient.poll();
+
+        if (sendNow && screenClient.available()) {
+            Serial.println("Sending response...");
+            screenClient.send("my response");
+            sendNow = false;
+        }
     }
 }

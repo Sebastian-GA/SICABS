@@ -33,7 +33,6 @@ void Display::drawPin(int digits, int attempts) {
     Adafruit_SSD1306::setTextColor(WHITE);
     Adafruit_SSD1306::setCursor(5, 0);
     Adafruit_SSD1306::println(F("Enter PIN:"));
-    Serial.println("are you drawing?");
     Adafruit_SSD1306::setCursor(25, 21);
     for (int i = 0; i < digits; i++) {
         Adafruit_SSD1306::print('*');
