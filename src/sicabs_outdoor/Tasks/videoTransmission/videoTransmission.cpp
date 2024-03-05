@@ -4,13 +4,18 @@
 #include "./Camera/Camera.h"
 #include "./MemoryManager/MemoryManager.h"
 
+// This will be triggered to true when the user either enters a correct pin or their fingerprint matches
 extern bool sendOpen;
 extern SemaphoreHandle_t mutex;
 
 Camera camera;
 // MemoryManager memoryManager;
 void onMessageCallback(websockets::WebsocketsMessage message);
+
+// When false, it stops image transmission for a while so that the esp32 cam can send the message
 bool sendImageFlag = true;
+
+// Internal counter that will go up for transmission
 int toIncrement = 0;
 
 void videoTransmission(void* parameter) {
@@ -50,7 +55,6 @@ void videoTransmission(void* parameter) {
 
 String localMessage;
 void onMessageCallback(websockets::WebsocketsMessage message) {
-    Serial.print("received a message! ");
     // Allows images to be sent as long as there's a response
     sendImageFlag = true;
     if (message.isText()) {
@@ -58,15 +62,16 @@ void onMessageCallback(websockets::WebsocketsMessage message) {
         localMessage = message.c_str();
         // Parse it to int and check if it's the same number incremented by 1
         if (localMessage.toInt() == toIncrement + 1) {
-            Serial.println("Indeed it's the expected number :)");
+            Serial.print("Received number: ");
+            Serial.println(localMessage.toInt());
             toIncrement = toIncrement + 2;
+            Serial.print("Internal counter incremented to: ");
+            Serial.println(toIncrement);
+
         }
         // In case it's not, then send error message to console
         else {
-            Serial.println("Not the expected number :(");
+            Serial.println("Unexpected response");
         }
-
-        Serial.print("the esp32 cam received a message: ");
-        Serial.println(message.c_str());
     }
 }

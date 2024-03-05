@@ -29,34 +29,30 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap);
 // ============================ SEMAPHORE =============================
 extern bool openDoor;
 extern SemaphoreHandle_t mutex;
-int a = 0;
 String localMessage;
 int localInt;
+
 bool sendNow = false;
+bool correctMessage = false;
+bool incorrectMessage = false;
+
+int toIncrement = 1;
 /**************************************************************************
  * CALLBACK FUNCTIONS
  **************************************************************************/
 void onMessageCallback(WebsocketsMessage message) {
     if (message.isText()) {
-        Serial.print("The received number was: ");
-        Serial.println(message.c_str());
         localMessage = message.c_str();
-        localInt = localMessage.toInt();
-        localInt = localInt + 1;
-        localMessage = String(localInt);
-        Serial.print("Now the incremented number looks like ");
-        Serial.println(localMessage);
-        // screenClient.send("giving back this");
-        sendNow = true;
-
-        // openDoor shared variable set to true (with mutex)
-        // if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
-        //     Serial.println("semaphore has been taken now");
-        //     openDoor = true;
-        //     xSemaphoreGive(mutex);
-        // } else {
-        //     Serial.println("not taken yet...");
-        // }
+        if (localMessage.toInt() + 1 == toIncrement) {
+            // Toggle sendNow flag so that we can send the response
+            Serial.print("Received number: ");
+            Serial.println(localMessage.toInt());
+            correctMessage = true;
+        } else {
+            // Unexpected message
+            Serial.println("Unexpected message");
+            incorrectMessage = true;
+        }
     }
     TJpgDec.drawJpg(0, 0, (const uint8_t*)message.c_str(), message.length());
 }
@@ -118,10 +114,28 @@ void videoReception(void* parameter) {
         if (screenClient.available())
             screenClient.poll();
 
-        if (sendNow && screenClient.available()) {
+        if (sendNow) {
             Serial.println("Sending response...");
             screenClient.send("my response");
             sendNow = false;
+        }
+        if (correctMessage) {
+            // send the number
+            screenClient.send(String(toIncrement));
+            Serial.print("Number sent: ");
+            Serial.println(toIncrement);
+            // increment the number by 2
+            toIncrement = toIncrement + 2;
+            Serial.print("Number incremented to: ");
+            Serial.println(toIncrement);
+
+            correctMessage = false;
+        }
+        if (incorrectMessage) {
+            // Send a -1
+            screenClient.send(String(-1));
+
+            incorrectMessage = false;
         }
     }
 }
