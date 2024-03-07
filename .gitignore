@@ -11,7 +11,7 @@ test_indoor_antes.txt
 antes.txt
 
 # Credentials
-credentials.h
+credentials*
 
 *.txt
-/trash
+trash/
