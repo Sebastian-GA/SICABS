@@ -7,8 +7,10 @@
 
 #include "./../tasks.hpp"
 #include "./gfx/LGFX_ESP32S3_RGB_MakerfabsParallelTFTwithTouch70.h"
-#include "common.h"
+#include "EncryptionManager.h"
+#include "MemoryManager.h"
 #include "config.h"
+#include "credentials.h"
 #include "credentials_template.h"
 /**************************************************************************
  * DEFINITIONS
@@ -29,12 +31,12 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap);
 // ============================ SEMAPHORE =============================
 extern bool openDoor;
 extern SemaphoreHandle_t mutex;
-String localMessage;
-int localInt;
 
-bool sendNow = false;
 bool correctMessage = false;
 bool incorrectMessage = false;
+
+EncryptionManager communicationEncryption;
+MemoryManager memoryManager;
 
 int toIncrement = 1;
 /**************************************************************************
@@ -42,15 +44,21 @@ int toIncrement = 1;
  **************************************************************************/
 void onMessageCallback(WebsocketsMessage message) {
     if (message.isText()) {
-        localMessage = message.c_str();
-        if (localMessage.toInt() + 1 == toIncrement) {
-            // Toggle sendNow flag so that we can send the response
-            Serial.print("Received number: ");
-            Serial.println(localMessage.toInt());
+        String receivedMessage = message.c_str();
+        Serial.print("\nMessage received: ");
+        Serial.println(receivedMessage);
+        // Notice that the decryption returns a number
+        int messageDecrypted = communicationEncryption.decrypt(receivedMessage);
+        Serial.print("And decrypted looks like: ");
+        Serial.println(messageDecrypted);
+        // Get internal counter
+        int internalCounter = memoryManager.readDeencrypted("counter");
+
+        if (messageDecrypted + 1 == internalCounter) {
+            Serial.println("It is the expected number!");
             correctMessage = true;
         } else {
-            // Unexpected message
-            Serial.println("Unexpected message");
+            Serial.println("Not the expected number...");
             incorrectMessage = true;
         }
     }
@@ -79,6 +87,19 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap) 
  * Task function
  **************************************************************************/
 void videoReception(void* parameter) {
+    communicationEncryption.encryptionManagerInit(communicationAESKey, communicationIV);
+    memoryManager.init(screenStorageAESKey, screenStorageIV);
+    String readValue = memoryManager.read("counter");
+
+    if (readValue == "notFound") {
+        Serial.println("Initializing internal counter to one...");
+        memoryManager.writeEncrypted("counter", 1);
+    } else {
+        Serial.print("The counter has the value of: ");
+        Serial.println(memoryManager.readDeencrypted("counter"));
+        Serial.print("And encrypted it looks like: ");
+        Serial.println(memoryManager.read("counter"));
+    }
     gfx.init();
     gfx.setRotation(0);
     gfx.setColorDepth(16);
@@ -113,27 +134,35 @@ void videoReception(void* parameter) {
         // Serial.println("I just sent a message from the big screen");
         if (screenClient.available())
             screenClient.poll();
-
-        if (sendNow) {
-            Serial.println("Sending response...");
-            screenClient.send("my response");
-            sendNow = false;
-        }
         if (correctMessage) {
-            // send the number
-            screenClient.send(String(toIncrement));
-            Serial.print("Number sent: ");
-            Serial.println(toIncrement);
-            // increment the number by 2
-            toIncrement = toIncrement + 2;
-            Serial.print("Number incremented to: ");
-            Serial.println(toIncrement);
+            // Get the counter
+            int internalCounter = memoryManager.readDeencrypted("counter");
+            String internalCounterEncrypted = communicationEncryption.encrypt(internalCounter);
+            // Finally send it
+            screenClient.send(internalCounterEncrypted);
+            Serial.print("Message sent: ");
+            Serial.println(internalCounterEncrypted);
+            Serial.print("Which is the number: ");
+            Serial.println(internalCounter);
 
+            // increment the local counter by 2
+            internalCounter = internalCounter + 2;
+            Serial.print("Number incremented to: ");
+            Serial.println(internalCounter);
+            Serial.println(" ");
+
+            // Save it internally
+            memoryManager.writeEncrypted("counter", internalCounter);
+
+            // Ensures that code executes only once
             correctMessage = false;
         }
         if (incorrectMessage) {
             // Send a -1
+            Serial.println("Not the expected number...");
             screenClient.send(String(-1));
+            ;
+            Serial.println(" ");
 
             incorrectMessage = false;
         }

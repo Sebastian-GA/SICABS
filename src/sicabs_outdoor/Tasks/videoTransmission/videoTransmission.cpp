@@ -3,78 +3,106 @@
 
 #include "./../Tasks.hpp"
 #include "./Camera/Camera.h"
-#include "./MemoryManager/MemoryManager.h"
 #include "EncryptionManager.h"
+#include "MemoryManager.h"
 #include "credentials.h"
 
 extern bool sendOpen;
+extern bool sendFakeOpen;
 extern SemaphoreHandle_t mutex;
 
 Camera camera;
-EncryptionManager encryptionManager;
+EncryptionManager communicationEncryption;
+MemoryManager memoryManager;
 void onMessageCallback(websockets::WebsocketsMessage message);
 
-bool sendImageFlag = true;
-int toIncrement = 0;
+bool sendImages = true;
 
 void videoTransmission(void* parameter) {
     Serial.begin(115200);
-    encryptionManager.encryptionManagerInit(communicationAESKey, communicationIV);
+    // Initialize encrypter
+    communicationEncryption.encryptionManagerInit(communicationAESKey, communicationIV);
+    memoryManager.init(cameraStorageAESKey, cameraStorageIV);
+    // Read the internal counter. If there's nothing, initialize it to 1
+    String readValue = memoryManager.read("counter");
 
-    // camera.initCamera();
-    // camera.connectToWifi();
-    // camera.connectClient();
-    // camera.client.onMessage(onMessageCallback);
+    if (readValue == "notFound") {
+        Serial.println("Initializing internal counter to zero...");
+        memoryManager.writeEncrypted("counter", 0);
+    } else {
+        Serial.print("The counter has the value of: ");
+        Serial.println(memoryManager.readDeencrypted("counter"));
+        Serial.print("And encrypted it looks like: ");
+        Serial.println(memoryManager.read("counter"));
+    }
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+
+    // Initialize camera
+    camera.initCamera();
+    camera.connectToWifi();
+    camera.connectClient();
+    camera.client.onMessage(onMessageCallback);
+
     while (1) {
-        Serial.print("The incremented number looks like: ");
-        Serial.println(toIncrement);
-        Serial.print("And encrypted it looks like:");
-        String toIncrementEncrypted = encryptionManager.encrypt(toIncrement);
-        Serial.println(toIncrementEncrypted);
-        Serial.print("Decrypted it looks like:");
-        int toIncrementDecrypted = encryptionManager.decrypt(toIncrementEncrypted);
-        Serial.println(toIncrementDecrypted);
-        Serial.print("Incremented by 1 it looks like: ");
-        Serial.println(toIncrementDecrypted + 1);
+        if (camera.client.available()) {
+            camera.client.poll();
+        }
 
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        toIncrement++;
+        if (xSemaphoreTake(mutex, 0) == pdTRUE) {
+            if (sendOpen) {
+                // Stop sending images for a while
+                sendImages = false;
+                // Get internal counter and its encrypted version
+                int counter = memoryManager.readDeencrypted("counter");
+                String counterToBeTransmitted = communicationEncryption.encrypt(counter);
+                // Send it encrypted
+                camera.client.send(counterToBeTransmitted);
+                // Show what was sent
+                Serial.print("\nSent to screen: ");
+                Serial.println(counterToBeTransmitted);
+                Serial.print("Which is: ");
+                Serial.println(counter);
 
-        // if (camera.client.available()) {
-        //     camera.client.poll();
-        // }
+                sendOpen = false;
+            }
+            if (sendFakeOpen) {
+                // Send the internal code to the screen.
+                Serial.println("The sendFakeOpen has been toggled to true. Toggling it to false...");
+                // Expect it to throw an error and keep the counter static
+                sendFakeOpen = false;
+            }
+            xSemaphoreGive(mutex);
+        }
 
-        // if (xSemaphoreTake(mutex, 0) == pdTRUE) {
-        //     if (sendOpen) {
-        //         sendImageFlag = false;
-        //         camera.client.send(String(toIncrement));
-        //         Serial.print("Number sent from camera: ");
-        //         Serial.println(toIncrement);
-
-        //         sendOpen = false;
-        //     }
-        //     xSemaphoreGive(mutex);
-        // }
-
-        // if (sendImageFlag)
-        //     camera.sendImageToIndoor();
+        if (sendImages)
+            camera.sendImageToIndoor();
     }
 }
 
-String localMessage;
 void onMessageCallback(websockets::WebsocketsMessage message) {
-    sendImageFlag = true;
+    // Send images again
+    sendImages = true;
     if (message.isText()) {
-        localMessage = message.c_str();
-        if (localMessage.toInt() == toIncrement + 1) {
-            Serial.print("Received number: ");
-            Serial.println(localMessage.toInt());
-            toIncrement = toIncrement + 2;
+        String receivedMessage = message.c_str();
+        Serial.print("\nMessage received: ");
+        Serial.println(receivedMessage);
+        int numberDecrypted = communicationEncryption.decrypt(receivedMessage);
+        Serial.print("And decrypted looks like: ");
+        Serial.println(numberDecrypted);
+        int internalCounter = memoryManager.readDeencrypted("counter");
+
+        if (numberDecrypted == internalCounter + 1) {
+            Serial.println("Number expected!");
+            internalCounter = internalCounter + 2;
             Serial.print("Internal counter incremented to: ");
-            Serial.println(toIncrement);
+            Serial.println(internalCounter);
+            Serial.println("Saving it to internal memory...");
+            memoryManager.writeEncrypted("counter", internalCounter);
+            Serial.println(" ");
 
         } else {
             Serial.println("Unexpected response");
+            Serial.println(" ");
         }
     }
 }

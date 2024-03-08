@@ -12,6 +12,7 @@ Display display;
 Keyboard keyboard;
 
 extern bool sendOpen;
+extern bool sendFakeOpen;
 extern SemaphoreHandle_t mutex;
 
 void userInteraction(void* parameter) {
@@ -63,6 +64,17 @@ void userInteraction(void* parameter) {
                 sendOpen = true;
             }
             xSemaphoreGive(mutex);
+        }
+        // In case the 3 is pressed in the menu, we send the internal message
+        if (keyEntered == '3' && display.state == State::MENU) {
+            // Take the mutex and toggle the sendOpenFake
+            if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+                // Toggle it in case it's false
+                if (!sendFakeOpen) {
+                    sendFakeOpen = true;
+                }
+                xSemaphoreGive(mutex);
+            }
         }
     }
 }
