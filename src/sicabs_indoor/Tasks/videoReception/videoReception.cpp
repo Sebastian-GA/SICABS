@@ -47,18 +47,17 @@ void onMessageCallback(WebsocketsMessage message) {
         String receivedMessage = message.c_str();
         Serial.print("\nMessage received: ");
         Serial.println(receivedMessage);
-        // Notice that the decryption returns a number
-        int messageDecrypted = communicationEncryption.decrypt(receivedMessage);
-        Serial.print("And decrypted looks like: ");
-        Serial.println(messageDecrypted);
-        // Get internal counter
+        // de-encrypt the inner counter
         int internalCounter = memoryManager.readDeencrypted("counter");
 
-        if (messageDecrypted + 1 == internalCounter) {
-            Serial.println("It is the expected number!");
+        // Compare
+        bool correct = receivedMessage == communicationEncryption.encrypt(internalCounter - 1);
+
+        if (correct) {
+            Serial.println("It's correct");
             correctMessage = true;
         } else {
-            Serial.println("Not the expected number...");
+            Serial.println("It's not correct");
             incorrectMessage = true;
         }
     }
@@ -161,7 +160,6 @@ void videoReception(void* parameter) {
             // Send a -1
             Serial.println("Not the expected number...");
             screenClient.send(String(-1));
-            ;
             Serial.println(" ");
 
             incorrectMessage = false;

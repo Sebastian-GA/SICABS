@@ -27,10 +27,10 @@ void videoTransmission(void* parameter) {
     String readValue = memoryManager.read("counter");
 
     if (readValue == "notFound") {
-        Serial.println("Initializing internal counter to zero...");
-        memoryManager.writeEncrypted("counter", 0);
+        Serial.println("Initializing internal counter to ten...");
+        memoryManager.writeEncrypted("counter", 10);
     } else {
-        Serial.print("The counter has the value of: ");
+        Serial.print("\n\nThe counter has the value of: ");
         Serial.println(memoryManager.readDeencrypted("counter"));
         Serial.print("And encrypted it looks like: ");
         Serial.println(memoryManager.read("counter"));
@@ -66,9 +66,11 @@ void videoTransmission(void* parameter) {
                 sendOpen = false;
             }
             if (sendFakeOpen) {
-                // Send the internal code to the screen.
-                Serial.println("The sendFakeOpen has been toggled to true. Toggling it to false...");
-                // Expect it to throw an error and keep the counter static
+                // Stop sending images for a while
+                sendImages = false;
+                String internalCounterEncrypted = memoryManager.read("counter");
+                Serial.println("Sending counter as encrypted internally...");
+                camera.client.send(internalCounterEncrypted);
                 sendFakeOpen = false;
             }
             xSemaphoreGive(mutex);
