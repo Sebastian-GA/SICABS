@@ -6,7 +6,12 @@
 .vscode/ipch
 
 # Tests
-src/test
+src/test*
+test_indoor_antes.txt
+antes.txt
 
 # Credentials
-credentials.h
+credentials*
+
+*.txt
+trash/
