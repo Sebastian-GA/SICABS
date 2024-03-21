@@ -28,7 +28,7 @@ void videoTransmission(void* parameter) {
 
     if (readValue == "notFound") {
         Serial.println("Initializing internal counter to ten...");
-        memoryManager.writeEncrypted("counter", 10);
+        memoryManager.writeEncrypted("counter", 60);
     } else {
         Serial.print("\n\nThe counter has the value of: ");
         Serial.println(memoryManager.readDeencrypted("counter"));

@@ -8,6 +8,7 @@ Display::Display() : Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, jwire, OLED_R
 void Display::drawMenu(char keyEntered, SFM_Module& fingerprintSensor) {
     if (!shown) {
         Adafruit_SSD1306::clearDisplay();
+        Adafruit_SSD1306::setRotation(2);
         Adafruit_SSD1306::setTextSize(2);
         Adafruit_SSD1306::setTextColor(WHITE);
         Adafruit_SSD1306::setCursor(10, 10);
@@ -30,6 +31,7 @@ void Display::drawMenu(char keyEntered, SFM_Module& fingerprintSensor) {
 
 void Display::drawPin(int digits, int attempts) {
     Adafruit_SSD1306::clearDisplay();
+    Adafruit_SSD1306::setRotation(2);
     Adafruit_SSD1306::setTextSize(2);
     Adafruit_SSD1306::setTextColor(WHITE);
     Adafruit_SSD1306::setCursor(5, 0);
@@ -49,6 +51,7 @@ void Display::showAccessGranted(Keyboard& keyboard) {
     if (!shown) {
         int localVar;
         Adafruit_SSD1306::clearDisplay();
+        Adafruit_SSD1306::setRotation(2);
         Adafruit_SSD1306::setTextSize(2);
         Adafruit_SSD1306::setTextColor(WHITE);
         Adafruit_SSD1306::setCursor(25, 10);
@@ -82,6 +85,7 @@ void Display::showAccessDenied(Keyboard& keyboard) {
         startingTime = millis();
 
         Adafruit_SSD1306::clearDisplay();
+        Adafruit_SSD1306::setRotation(2);
         Adafruit_SSD1306::setTextSize(2);
         Adafruit_SSD1306::setTextColor(WHITE);
         Adafruit_SSD1306::setCursor(25, 10);
@@ -159,6 +163,7 @@ void Display::touchFingerprint(char keyEntered, Keyboard& keyboard, SFM_Module& 
 
 void Display::drawTouchPromptText(int attempts) {
     Adafruit_SSD1306::clearDisplay();
+    Adafruit_SSD1306::setRotation(2);
     Adafruit_SSD1306::setTextSize(2);
     Adafruit_SSD1306::setTextColor(WHITE);
     Adafruit_SSD1306::setCursor(35, 0);
@@ -174,6 +179,7 @@ void Display::drawTouchPromptText(int attempts) {
 
 void Display::drawFailedAttemptsCountdown() {
     Adafruit_SSD1306::clearDisplay();
+    Adafruit_SSD1306::setRotation(2);
     Adafruit_SSD1306::setTextSize(2);
     Adafruit_SSD1306::setTextColor(WHITE);
     Adafruit_SSD1306::setCursor(10, 10);

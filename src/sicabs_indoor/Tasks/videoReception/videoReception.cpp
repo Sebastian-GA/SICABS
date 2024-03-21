@@ -38,7 +38,9 @@ bool incorrectMessage = false;
 EncryptionManager communicationEncryption;
 MemoryManager memoryManager;
 
-int toIncrement = 1;
+// int toIncrement = 1;
+unsigned long int lastTimeMessageReceived = 0;
+unsigned long int timeOut = 8000;
 /**************************************************************************
  * CALLBACK FUNCTIONS
  **************************************************************************/
@@ -67,6 +69,8 @@ void onMessageCallback(WebsocketsMessage message) {
         }
     }
     TJpgDec.drawJpg(0, 0, (const uint8_t*)message.c_str(), message.length());
+
+    // record the last time a message was received
 }
 
 void onEventsCallback(WebsocketsEvent event, String data) {
@@ -169,5 +173,6 @@ void videoReception(void* parameter) {
 
             incorrectMessage = false;
         }
+        // Restart if no message has been sent
     }
 }
