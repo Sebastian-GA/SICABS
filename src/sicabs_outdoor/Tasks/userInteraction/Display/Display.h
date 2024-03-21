@@ -5,6 +5,7 @@
 
 #include "./../Keyboard/Keyboard.h"
 #include "DisplayConfig.h"
+#include "sfm.hpp"
 
 class Display : public Adafruit_SSD1306 {
    public:
@@ -13,14 +14,18 @@ class Display : public Adafruit_SSD1306 {
     int state = State::MENU;
     unsigned long int startingTime = 0;
     int delayShow = 2000;
+    int fingerprintScanPeriod = 1000;
+    uint8_t temp = 0;
+    uint16_t tempUid = 0;
+
     // Draw functions
-    void drawMenu(char keyEntered);
+    void drawMenu(char keyEntered, SFM_Module& fingerprintSensor);
     void drawPin(int digits, int attempts);
     void drawFailedAttemptsCountdown();
     void drawTouchPromptText(int attempts);
 
     // for fingerprint sensor
-    void touchFingerprint(char keyEntered, Keyboard& keyboard);
+    void touchFingerprint(char keyEntered, Keyboard& keyboard, SFM_Module& fingerprintSensor);
 
     void enterPin(char keyEntered, Keyboard& keyboard);
     void failedAttemptsCountdown(Keyboard& keyboard);

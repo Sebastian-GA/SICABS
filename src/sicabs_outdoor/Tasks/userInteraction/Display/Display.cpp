@@ -5,7 +5,7 @@
 Display::Display() : Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, jwire, OLED_RESET) {
 }
 
-void Display::drawMenu(char keyEntered) {
+void Display::drawMenu(char keyEntered, SFM_Module& fingerprintSensor) {
     if (!shown) {
         Adafruit_SSD1306::clearDisplay();
         Adafruit_SSD1306::setTextSize(2);
@@ -15,6 +15,7 @@ void Display::drawMenu(char keyEntered) {
         Adafruit_SSD1306::println(F("1. PIN"));
         Adafruit_SSD1306::println(F("2. Finger"));
         Adafruit_SSD1306::display();
+        fingerprintSensor.setRingColor(SFM_RING_OFF);
         shown = true;
     }
     if (keyEntered == '1') {
@@ -120,10 +121,14 @@ void Display::enterPin(char keyEntered, Keyboard& keyboard) {
     }
 }
 
-void Display::touchFingerprint(char keyEntered, Keyboard& keyboard) {
+void Display::touchFingerprint(char keyEntered, Keyboard& keyboard, SFM_Module& fingerprintSensor) {
     if (!shown) {
         // 1) draw the text along with its attempts
         drawTouchPromptText(keyboard.getAttempts());
+        fingerprintSensor.setRingColor(SFM_RING_BLUE, SFM_RING_OFF);
+        temp = 0;
+        tempUid = 0;
+        startingTime = millis();
         shown = true;
     }
     // 2) check if the user has pressed the password
@@ -131,15 +136,35 @@ void Display::touchFingerprint(char keyEntered, Keyboard& keyboard) {
         state = State::MENU;
         shown = false;
     }
+    // 3) check for fingeprint pressed...
+    if (millis() > startingTime + fingerprintScanPeriod) {
+        if (fingerprintSensor.isTouched() && fingerprintSensor.isFingerPressed()) {
+            fingerprintSensor.setRingColor(SFM_RING_YELLOW);
+            temp = fingerprintSensor.recognition_1vN(tempUid);
+            // When recognized
+            if (tempUid != 0) {
+                fingerprintSensor.setRingColor(SFM_RING_GREEN);
+                state = State::CORRECT_PIN;
+                shown = false;
+            } else {
+                fingerprintSensor.setRingColor(SFM_RING_RED);
+                state = State::INCORRECT_PIN;
+                shown = false;
+            }
+        }
+        // Updating the time
+        startingTime = millis();
+    }
 }
 
 void Display::drawTouchPromptText(int attempts) {
     Adafruit_SSD1306::clearDisplay();
     Adafruit_SSD1306::setTextSize(2);
     Adafruit_SSD1306::setTextColor(WHITE);
-    Adafruit_SSD1306::setCursor(5, 0);
-    Adafruit_SSD1306::println(F("Touch sensor"));
-    Adafruit_SSD1306::setCursor(25, 21);
+    Adafruit_SSD1306::setCursor(35, 0);
+    Adafruit_SSD1306::println(F("Touch"));
+    Adafruit_SSD1306::setCursor(30, 21);
+    Adafruit_SSD1306::println(F("sensor"));
     Adafruit_SSD1306::setCursor(30, 42);
     Adafruit_SSD1306::print(F("Att: "));
     Adafruit_SSD1306::print(attempts);

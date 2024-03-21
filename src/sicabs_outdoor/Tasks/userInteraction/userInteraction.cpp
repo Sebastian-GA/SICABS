@@ -42,7 +42,7 @@ void userInteraction(void* parameter) {
         char keyEntered = keyboard.getKey();
         switch (display.state) {
             case State::MENU:
-                display.drawMenu(keyEntered);
+                display.drawMenu(keyEntered, fingerprintSensor);
                 break;
             case State::ENTER_PIN:
                 display.enterPin(keyEntered, keyboard);
@@ -54,7 +54,7 @@ void userInteraction(void* parameter) {
                 display.showAccessDenied(keyboard);
                 break;
             case State::ENTER_FINGERPRINT:
-                display.touchFingerprint(keyEntered, keyboard);
+                display.touchFingerprint(keyEntered, keyboard, fingerprintSensor);
                 break;
             case State::CORRECT_FINGERPRINT:
                 display.showAccessGranted(keyboard);
