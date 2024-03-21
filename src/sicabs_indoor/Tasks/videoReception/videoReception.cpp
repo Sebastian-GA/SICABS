@@ -55,6 +55,11 @@ void onMessageCallback(WebsocketsMessage message) {
 
         if (correct) {
             Serial.println("It's correct");
+            // Take semaphore and change it
+            if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+                openDoor = true;
+                xSemaphoreGive(mutex);
+            }
             correctMessage = true;
         } else {
             Serial.println("It's not correct");

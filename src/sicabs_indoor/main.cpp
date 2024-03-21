@@ -22,9 +22,9 @@ void setup() {
         Serial.println("video not allocated :(");
     }
 
-    // if (xTaskCreatePinnedToCore(lockControl, "blink LED", 5000, NULL, 1, &led, 0) != pdPASS) {
-    //     Serial.println("LED blinking not allocated :(");
-    // }
+    if (xTaskCreatePinnedToCore(lockControl, "Lock control", 5000, NULL, 1, &led, 0) != pdPASS) {
+        Serial.println("Lock control not allocated :(");
+    }
 
     vTaskDelete(NULL);
 }
