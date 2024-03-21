@@ -3,13 +3,21 @@
 #include "./../Tasks.hpp"
 #include "./Display/Display.h"
 #include "./Keyboard/Keyboard.h"
+#include "sfm.hpp"
 
 #define SERIAL_BAUD_RATE 115200
 #define I2C_SDA_PIN 14
 #define I2C_SCL_PIN 2
 
+// fingerprint sensor pins
+#define SFM_RX 12
+#define SFM_TX 16
+#define SFM_IRQ -1
+#define SFM_VCC 13
+
 Display display;
 Keyboard keyboard;
+SFM_Module fingerprintSensor = SFM_Module(SFM_VCC, SFM_IRQ, SFM_TX, SFM_RX);
 
 extern bool sendOpen;
 extern bool sendFakeOpen;
@@ -46,10 +54,13 @@ void userInteraction(void* parameter) {
                 display.showAccessDenied(keyboard);
                 break;
             case State::ENTER_FINGERPRINT:
+                display.touchFingerprint(keyEntered, keyboard);
                 break;
             case State::CORRECT_FINGERPRINT:
+                display.showAccessGranted(keyboard);
                 break;
             case State::INCORRECT_FINGERPRINT:
+                display.showAccessDenied(keyboard);
                 break;
             case State::FAILED_ATTEMPTS:
                 display.failedAttemptsCountdown(keyboard);
@@ -66,7 +77,7 @@ void userInteraction(void* parameter) {
             xSemaphoreGive(mutex);
         }
         // In case the 3 is pressed in the menu, we send the internal message
-        if (keyEntered == '3' && display.state == State::MENU) {
+        if (keyEntered == '4' && display.state == State::MENU) {
             // Take the mutex and toggle the sendOpenFake
             if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
                 // Toggle it in case it's false

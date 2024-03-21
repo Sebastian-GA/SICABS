@@ -13,13 +13,19 @@ class Display : public Adafruit_SSD1306 {
     int state = State::MENU;
     unsigned long int startingTime = 0;
     int delayShow = 2000;
+    // Draw functions
     void drawMenu(char keyEntered);
     void drawPin(int digits, int attempts);
-    void showAccessGranted(Keyboard& keyboard);
-    void showAccessDenied(Keyboard& keyboard);
+    void drawFailedAttemptsCountdown();
+    void drawTouchPromptText(int attempts);
+
+    // for fingerprint sensor
+    void touchFingerprint(char keyEntered, Keyboard& keyboard);
+
     void enterPin(char keyEntered, Keyboard& keyboard);
     void failedAttemptsCountdown(Keyboard& keyboard);
-    void drawFailedAttemptsCountdown();
+    void showAccessGranted(Keyboard& keyboard);
+    void showAccessDenied(Keyboard& keyboard);
 
     bool sendSignalFlag();
     void toggleSendSignalFlag();
@@ -28,8 +34,8 @@ class Display : public Adafruit_SSD1306 {
 
    private:
     TwoWire* jwire = &Wire;
-    int counter = 5;
-    int prevCounter = 5;
+    int counter = 30;
+    int prevCounter = 30;
 };
 
 #endif
