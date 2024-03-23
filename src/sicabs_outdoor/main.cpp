@@ -6,6 +6,10 @@
 bool sendOpen = false;
 SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
 bool sendFakeOpen = false;
+
+// Timer stuff
+uint8_t PIR_PIN = 15;
+
 void setup() {
     Serial.begin(115200);
     Serial.println("\n\n\n");
@@ -20,100 +24,55 @@ void loop() {
 
 // #include <Arduino.h>
 
-// #include <sfm.hpp>
+// uint8_t PIR_PIN = 15;
+// // 1) declare the timer
+// static TimerHandle_t timerToSleep = NULL;
 
-// // #define SFM_RX 12
-// // #define SFM_TX 3
-// #define SFM_RX 12
-// #define SFM_TX 16
-// #define SFM_IRQ -1
-// #define SFM_VCC 13
+// // fires up when timer is over
+// void goToSleep(TimerHandle_t xTimer);
 
-// SFM_Module SFM = SFM_Module(SFM_VCC, SFM_IRQ, SFM_TX, SFM_RX);
+// // fires up when a motion is detected
+// void IRAM_ATTR motionDetected();
 
-// uint8_t temp = 0;      // used to get recognition return
-// uint16_t tempUid = 0;  // used to get recognized uid
-// bool touchState = false;
-// bool lastTouchState = false;
-
-// unsigned long int lastExecutionTime = millis();
-// unsigned long int period = 1000;
-
-// enum Phase { zero,
-//              first,
-//              second,
-//              third };
-
-// int phase = Phase::zero;
+// bool hadBeenSlept = false;
+// bool executeCode = true;
 
 // void setup() {
 //     Serial.begin(115200);
-//     // Serial.begin(115200, SERIAL_8N1, 16, 17);
-//     // SFM.setRingColor(SFM_RING_BLUE, SFM_RING_OFF);
-//     Serial.println("color already set.");
-//     Serial.print("The UUID is: ");
-//     Serial.println(SFM.getUuid());
-//     Serial.print("There are ");
-//     Serial.print(SFM.getUserCount());
-//     Serial.print(" fingerprints\n");
+//     // ================== TIMER ============
+//     timerToSleep = xTimerCreate(
+//         "Sleep timer",
+//         10000 / portTICK_PERIOD_MS,
+//         pdFALSE,
+//         (void *)0,
+//         goToSleep);
+//     Serial.println("timer has started now");
+//     xTimerStart(timerToSleep, portMAX_DELAY);
+
+//     // ================== PIR SENSOR ============
+//     pinMode(PIR_PIN, INPUT_PULLDOWN);
+//     attachInterrupt(digitalPinToInterrupt(PIR_PIN), motionDetected, CHANGE);
 // }
 
 // void loop() {
-//     // Execute inner block every 1 second
-//     if (millis() > lastExecutionTime + period) {
-//         switch (phase) {
-//             case Phase::first:
-//                 if (SFM.isFingerPressed()) {
-//                     temp = SFM.register_3c3r_1st();
-//                     if (temp == SFM_ACK_SUCCESS) {
-//                         Serial.println("Successfully recognized. Going to second part...");
-//                         phase = Phase::second;
-//                     } else {
-//                         Serial.println("Not recognized yet");
-//                     }
-//                 }
-//                 break;
-//             case Phase::second:
-//                 if (SFM.isFingerPressed()) {
-//                     temp = SFM.register_3c3r_2nd();
-//                     if (temp == SFM_ACK_SUCCESS) {
-//                         Serial.println("Successfully recognized. Going to third part...");
-//                         phase = Phase::third;
-//                     } else {
-//                         Serial.println("Recognition failed. Try again.");
-//                         phase = Phase::first;
-//                     }
-//                 }
-//                 break;
-//             case Phase::third:
-//                 if (SFM.isFingerPressed()) {
-//                     temp = SFM.register_3c3r_3rd(tempUid);
-//                     if (temp == SFM_ACK_SUCCESS && tempUid != 0) {
-//                         Serial.printf("Register successful with return UID: %d\n", tempUid);
-//                         phase = Phase::first;
-//                     } else {
-//                         Serial.println("Registration failed. Try again.");
-//                         phase = Phase::first;
-//                     }
-//                 }
-//                 break;
-//             case Phase::zero:
-//                 if (SFM.isTouched() && SFM.isFingerPressed()) {
-//                     Serial.println("is touched now.");
-//                     SFM.setRingColor(SFM_RING_YELLOW);
-//                     temp = SFM.recognition_1vN(tempUid);
-//                     if (tempUid != 0) {
-//                         Serial.printf("Successfully matched with UID: %d\n", tempUid);
-//                         SFM.setRingColor(SFM_RING_GREEN);
-//                     } else {
-//                         Serial.println("Not recognized xd");
-//                         SFM.setRingColor(SFM_RING_RED);
-//                     }
-//                 }
-//                 break;
-//         }
+//     if (executeCode) {
+//         Serial.println("Hey mom!!!");
+//         delay(10);
+//     }
+// }
 
-//         // Update the time
-//         lastExecutionTime = millis();
+// void goToSleep(TimerHandle_t xTimer) {
+//     Serial.println("went to sleep for now...");
+//     executeCode = false;
+//     // Serial.println("Restarting it...");
+//     // xTimerReset(timerToSleep, NULL);
+// }
+
+// void IRAM_ATTR motionDetected() {
+//     if (digitalRead(PIR_PIN) == HIGH) {
+//         xTimerStopFromISR(timerToSleep, NULL);
+//         executeCode = true;
+//     } else {
+//         xTimerResetFromISR(timerToSleep, NULL);
 //     }
 // }
