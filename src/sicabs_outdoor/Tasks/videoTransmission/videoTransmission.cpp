@@ -24,6 +24,7 @@ void videoTransmission(void* parameter) {
     communicationEncryption.encryptionManagerInit(communicationAESKey, communicationIV);
     memoryManager.init(cameraStorageAESKey, cameraStorageIV);
     // Read the internal counter. If there's nothing, initialize it to 1
+    // memoryManager.remove("counter");
     String readValue = memoryManager.read("counter");
 
     if (readValue == "notFound") {

@@ -138,6 +138,7 @@ void videoReception(void* parameter) {
     screenClient.onMessage(onMessageCallback);
 
     for (;;) {
+        Serial.println("printed from loop");
         // screenClient.send("Saludos desde la pantalla");
         // Serial.println("I just sent a message from the big screen");
         if (screenClient.available())
