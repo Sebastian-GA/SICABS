@@ -16,7 +16,6 @@ void setup() {
     Serial.println();
     Serial.println("---SICABS Indoor---");
     Serial.println();
-    // mutex = xSemaphoreCreateMutex();
 
     if (xTaskCreatePinnedToCore(videoReception, "Video projection", 10000, NULL, 1, &video, 1) != pdPASS) {
         Serial.println("video not allocated :(");
