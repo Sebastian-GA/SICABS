@@ -5,6 +5,11 @@
 Display::Display() : Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, jwire, OLED_RESET) {
 }
 
+void Display::drawIdle() {
+    Adafruit_SSD1306::clearDisplay();
+    Adafruit_SSD1306::display();
+}
+
 void Display::drawMenu(char keyEntered, SFM_Module& fingerprintSensor) {
     if (!shown) {
         Adafruit_SSD1306::clearDisplay();

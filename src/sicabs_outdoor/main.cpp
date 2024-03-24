@@ -8,71 +8,56 @@ SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
 bool sendFakeOpen = false;
 
 // Timer stuff
-uint8_t PIR_PIN = 15;
+uint8_t PIRSensorPIN = 15;
+static TimerHandle_t timerToSleep = NULL;
+
+// when timer is over
+void whenTimerIsOver(TimerHandle_t xTimer);
+
+// when there's a change in movement
+void IRAM_ATTR motionDetected();
+
+volatile bool oledOn = true;
+volatile bool sendImagesOn = true;
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("\n\n\n");
-    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
     xTaskCreatePinnedToCore(userInteraction, "User interaction", 10000, NULL, 1, NULL, 0);
-    xTaskCreatePinnedToCore(videoTransmission, "Video transmission", 10000, NULL, 1, NULL, 1);
+    // xTaskCreatePinnedToCore(videoTransmission, "Video transmission", 10000, NULL, 1, NULL, 1);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    // ============== TIMER ===================
+    timerToSleep = xTimerCreate(
+        "Sleep timer",
+        10000 / portTICK_PERIOD_MS,
+        pdFALSE,
+        (void *)0,
+        whenTimerIsOver);
+    xTimerStart(timerToSleep, portMAX_DELAY);
+
+    // // =================== PIR SENSOR ===============
+    pinMode(PIRSensorPIN, INPUT_PULLDOWN);
+    attachInterrupt(digitalPinToInterrupt(PIRSensorPIN), motionDetected, CHANGE);
+
+    // Serial.println("\n\n\n");
+    // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+    // vTaskDelay(1000 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
 }
 void loop() {
 }
 
-// #include <Arduino.h>
+void whenTimerIsOver(TimerHandle_t xTimer) {
+    Serial.println("went to sleep for now................");
+    oledOn = false;
+    sendImagesOn = false;
+}
 
-// uint8_t PIR_PIN = 15;
-// // 1) declare the timer
-// static TimerHandle_t timerToSleep = NULL;
-
-// // fires up when timer is over
-// void goToSleep(TimerHandle_t xTimer);
-
-// // fires up when a motion is detected
-// void IRAM_ATTR motionDetected();
-
-// bool hadBeenSlept = false;
-// bool executeCode = true;
-
-// void setup() {
-//     Serial.begin(115200);
-//     // ================== TIMER ============
-//     timerToSleep = xTimerCreate(
-//         "Sleep timer",
-//         10000 / portTICK_PERIOD_MS,
-//         pdFALSE,
-//         (void *)0,
-//         goToSleep);
-//     Serial.println("timer has started now");
-//     xTimerStart(timerToSleep, portMAX_DELAY);
-
-//     // ================== PIR SENSOR ============
-//     pinMode(PIR_PIN, INPUT_PULLDOWN);
-//     attachInterrupt(digitalPinToInterrupt(PIR_PIN), motionDetected, CHANGE);
-// }
-
-// void loop() {
-//     if (executeCode) {
-//         Serial.println("Hey mom!!!");
-//         delay(10);
-//     }
-// }
-
-// void goToSleep(TimerHandle_t xTimer) {
-//     Serial.println("went to sleep for now...");
-//     executeCode = false;
-//     // Serial.println("Restarting it...");
-//     // xTimerReset(timerToSleep, NULL);
-// }
-
-// void IRAM_ATTR motionDetected() {
-//     if (digitalRead(PIR_PIN) == HIGH) {
-//         xTimerStopFromISR(timerToSleep, NULL);
-//         executeCode = true;
-//     } else {
-//         xTimerResetFromISR(timerToSleep, NULL);
-//     }
-// }
+void IRAM_ATTR motionDetected() {
+    if (digitalRead(PIRSensorPIN) == HIGH) {
+        xTimerStopFromISR(timerToSleep, NULL);
+        oledOn = true;
+        sendImagesOn = true;
+    } else {
+        xTimerResetFromISR(timerToSleep, NULL);
+    }
+}

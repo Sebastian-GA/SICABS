@@ -11,6 +11,8 @@ extern bool sendOpen;
 extern bool sendFakeOpen;
 extern SemaphoreHandle_t mutex;
 
+extern volatile bool sendImagesOn;
+
 Camera camera;
 EncryptionManager communicationEncryption;
 MemoryManager memoryManager;
@@ -79,6 +81,10 @@ void videoTransmission(void* parameter) {
 
         if (sendImages)
             camera.sendImageToIndoor();
+        if (sendImagesOn)
+            Serial.println("sendImagesOn is true");
+        else
+            Serial.println("SendImagesOn is false");
     }
 }
 

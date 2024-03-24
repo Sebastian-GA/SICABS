@@ -23,6 +23,7 @@ class Display : public Adafruit_SSD1306 {
     void drawPin(int digits, int attempts);
     void drawFailedAttemptsCountdown();
     void drawTouchPromptText(int attempts);
+    void drawIdle();
 
     // for fingerprint sensor
     void touchFingerprint(char keyEntered, Keyboard& keyboard, SFM_Module& fingerprintSensor);
