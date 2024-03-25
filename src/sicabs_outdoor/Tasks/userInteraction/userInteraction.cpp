@@ -44,57 +44,47 @@ void userInteraction(void* parameter) {
     int localVar;
 
     while (1) {
-        if (millis() >= prev + period) {
-            Serial.print("The value of oledOn is: ");
-            Serial.println(oledOn);
-
-            prev = millis();
+        char keyEntered = keyboard.getKey();
+        switch (display.state) {
+            case State::MENU:
+                display.drawMenu(keyEntered, fingerprintSensor);
+                break;
+            case State::ENTER_PIN:
+                display.enterPin(keyEntered, keyboard);
+                break;
+            case State::CORRECT_PIN:
+                display.showAccessGranted(keyboard);
+                break;
+            case State::INCORRECT_PIN:
+                display.showAccessDenied(keyboard);
+                break;
+            case State::ENTER_FINGERPRINT:
+                display.touchFingerprint(keyEntered, keyboard, fingerprintSensor);
+                break;
+            case State::CORRECT_FINGERPRINT:
+                display.showAccessGranted(keyboard);
+                break;
+            case State::INCORRECT_FINGERPRINT:
+                display.showAccessDenied(keyboard);
+                break;
+            case State::FAILED_ATTEMPTS:
+                display.failedAttemptsCountdown(keyboard);
+                break;
+            default:
+                break;
         }
-        if (!oledOn) {
-            display.drawIdle();
-            display.shown = false;
-        } else {
-            char keyEntered = keyboard.getKey();
-            switch (display.state) {
-                case State::MENU:
-                    display.drawMenu(keyEntered, fingerprintSensor);
-                    break;
-                case State::ENTER_PIN:
-                    display.enterPin(keyEntered, keyboard);
-                    break;
-                case State::CORRECT_PIN:
-                    display.showAccessGranted(keyboard);
-                    break;
-                case State::INCORRECT_PIN:
-                    display.showAccessDenied(keyboard);
-                    break;
-                case State::ENTER_FINGERPRINT:
-                    display.touchFingerprint(keyEntered, keyboard, fingerprintSensor);
-                    break;
-                case State::CORRECT_FINGERPRINT:
-                    display.showAccessGranted(keyboard);
-                    break;
-                case State::INCORRECT_FINGERPRINT:
-                    display.showAccessDenied(keyboard);
-                    break;
-                case State::FAILED_ATTEMPTS:
-                    display.failedAttemptsCountdown(keyboard);
-                    break;
-                default:
-                    break;
-            }
-            // In case the 3 is pressed in the menu, we send the internal message
-            if (keyEntered == '4' && display.state == State::MENU) {
-                // Take the mutex and toggle the sendOpenFake
-                if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
-                    // Toggle it in case it's false
-                    if (!sendFakeOpen) {
-                        sendFakeOpen = true;
-                    }
-                    xSemaphoreGive(mutex);
+        // In case the 3 is pressed in the menu, we send the internal message
+        if (keyEntered == '4' && display.state == State::MENU) {
+            // Take the mutex and toggle the sendOpenFake
+            if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+                // Toggle it in case it's false
+                if (!sendFakeOpen) {
+                    sendFakeOpen = true;
                 }
+                xSemaphoreGive(mutex);
             }
         }
+
         if (xSemaphoreTake(mutex, 0) == pdTRUE) {
             // Tell transmission task that it's time to send the message
             if (display.sendSignal) {

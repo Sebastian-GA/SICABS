@@ -11,7 +11,10 @@ extern bool sendOpen;
 extern bool sendFakeOpen;
 extern SemaphoreHandle_t mutex;
 
-extern volatile bool sendImagesOn;
+// for idle state
+extern bool idle;
+extern SemaphoreHandle_t idleStateMutex;
+bool idleTransmission = false;
 
 Camera camera;
 EncryptionManager communicationEncryption;
@@ -78,11 +81,15 @@ void videoTransmission(void* parameter) {
             }
             xSemaphoreGive(mutex);
         }
+        // read idle global variable
+        if (xSemaphoreTake(idleStateMutex, portMAX_DELAY) == pdTRUE) {
+            // idle = false;
+            idleTransmission = idle;
+            xSemaphoreGive(idleStateMutex);
+        }
 
-        if (sendImages)
+        if (sendImages && !idleTransmission)
             camera.sendImageToIndoor();
-        if (sendImagesOn)
-            Serial.println("sendImagesOn is true");
         else
             Serial.println("SendImagesOn is false");
     }
