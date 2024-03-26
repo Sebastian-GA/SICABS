@@ -49,7 +49,7 @@ class SFM_Module {
 #if defined(ARDUINO_AVR_PROMICRO16)
     SFM_Module(uint8_t vccPin, uint8_t irqPin, HardwareSerial &hs);
 #else
-    SFM_Module(uint8_t vccPin, uint8_t irqPin, uint8_t rxPin, uint8_t txPin, uint8_t uartIndex = 1);
+    SFM_Module(uint8_t vccPin, uint8_t irqPin, uint8_t rxPin, uint8_t txPin, uint8_t uartIndex = 2);
 #endif
     ~SFM_Module();
     void enable();
@@ -75,6 +75,7 @@ class SFM_Module {
     uint8_t recognition_1v1(uint16_t uid);
     uint8_t recognition_1vN(uint16_t &returnUid);
     uint8_t stopAll();
+    bool isFingerPressed();
 
    protected:
     uint8_t _getCheckSum(uint8_t *buffer);
@@ -93,7 +94,7 @@ class SFM_Module {
     String uuid = "";
     uint16_t userCount = 0;
     uint8_t vcc_pin;
-    uint8_t irq_pin;
+    int8_t irq_pin;
 #if not defined(ARDUINO_AVR_PROMICRO16)
     uint8_t rx_pin;
     uint8_t tx_pin;
