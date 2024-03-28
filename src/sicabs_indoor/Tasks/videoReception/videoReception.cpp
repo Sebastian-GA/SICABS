@@ -11,7 +11,6 @@
 #include "MemoryManager.h"
 #include "config.h"
 #include "credentials.h"
-#include "credentials_template.h"
 /**************************************************************************
  * DEFINITIONS
  **************************************************************************/
