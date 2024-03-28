@@ -14,8 +14,8 @@
 // WiFi credentials
 #define WIFI_SSID "your_wifi_ssid"
 #define WIFI_PASSWORD "your_wifi_password"
-#define SERVER_HOST "your_server_host"
-#define SERVER_PORT 1111
+#define SERVER_HOST "192.168.4.1"
+#define SERVER_PORT 8888
 
 // Fingerprint Sensor
 #define FINGERPRINT_UUID "your_sensor_uuid"
