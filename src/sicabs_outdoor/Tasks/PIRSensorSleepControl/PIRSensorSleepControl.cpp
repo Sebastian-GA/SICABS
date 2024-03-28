@@ -30,6 +30,7 @@ void PIRSensorSleepControl(void* parameter) {
 
             // Do something if the internal counter was in zero
             if (internalCounter <= 0) {
+                Serial.println("awake now");
                 if (xSemaphoreTake(idleStateMutex, portMAX_DELAY) == pdTRUE) {
                     idle = false;
                     xSemaphoreGive(idleStateMutex);
@@ -53,7 +54,7 @@ void PIRSensorSleepControl(void* parameter) {
         if (decrementFlag && millis() >= previous + periodPIR && internalCounter > 0) {
             internalCounter = internalCounter - 1;
             if (internalCounter == 0 && prevInternalCounter == 1) {
-                // Serial.println("Going to sleep...");
+                Serial.println("Going to sleep...");
                 if (xSemaphoreTake(idleStateMutex, portMAX_DELAY) == pdTRUE) {
                     idle = true;
                     xSemaphoreGive(idleStateMutex);

@@ -21,7 +21,7 @@ void Display::drawMenu(char keyEntered, SFM_Module& fingerprintSensor) {
         Adafruit_SSD1306::println(F("1. PIN"));
         Adafruit_SSD1306::println(F("2. Finger"));
         Adafruit_SSD1306::display();
-        fingerprintSensor.setRingColor(SFM_RING_OFF);
+        // fingerprintSensor.setRingColor(SFM_RING_OFF);
         shown = true;
     }
     if (keyEntered == '1') {

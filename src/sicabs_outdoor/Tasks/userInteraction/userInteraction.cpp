@@ -23,10 +23,10 @@ extern bool sendOpen;
 extern bool sendFakeOpen;
 extern SemaphoreHandle_t mutex;
 
-extern volatile bool oledOn;
-
-unsigned long int prev = millis();
-unsigned long int period = 1000;
+// for idle state
+extern bool idle;
+extern SemaphoreHandle_t idleStateMutex;
+bool idleInteraction = false;
 
 void userInteraction(void* parameter) {
     Serial.begin(SERIAL_BAUD_RATE);
@@ -44,44 +44,58 @@ void userInteraction(void* parameter) {
     int localVar;
 
     while (1) {
-        char keyEntered = keyboard.getKey();
-        switch (display.state) {
-            case State::MENU:
-                display.drawMenu(keyEntered, fingerprintSensor);
-                break;
-            case State::ENTER_PIN:
-                display.enterPin(keyEntered, keyboard);
-                break;
-            case State::CORRECT_PIN:
-                display.showAccessGranted(keyboard);
-                break;
-            case State::INCORRECT_PIN:
-                display.showAccessDenied(keyboard);
-                break;
-            case State::ENTER_FINGERPRINT:
-                display.touchFingerprint(keyEntered, keyboard, fingerprintSensor);
-                break;
-            case State::CORRECT_FINGERPRINT:
-                display.showAccessGranted(keyboard);
-                break;
-            case State::INCORRECT_FINGERPRINT:
-                display.showAccessDenied(keyboard);
-                break;
-            case State::FAILED_ATTEMPTS:
-                display.failedAttemptsCountdown(keyboard);
-                break;
-            default:
-                break;
+        // check for idle state
+        if (xSemaphoreTake(idleStateMutex, 0) == pdTRUE) {
+            idleInteraction = idle;
+            xSemaphoreGive(idleStateMutex);
         }
-        // In case the 3 is pressed in the menu, we send the internal message
-        if (keyEntered == '4' && display.state == State::MENU) {
-            // Take the mutex and toggle the sendOpenFake
-            if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
-                // Toggle it in case it's false
-                if (!sendFakeOpen) {
-                    sendFakeOpen = true;
+        if (idleInteraction) {
+            display.drawIdle();
+            display.shown = false;
+            // keyboard.clearPassword();
+            // display.state = State::MENU;
+        } else {
+            char keyEntered = keyboard.getKey();
+            if (keyEntered)
+                Serial.println(keyEntered);
+            switch (display.state) {
+                case State::MENU:
+                    display.drawMenu(keyEntered, fingerprintSensor);
+                    break;
+                case State::ENTER_PIN:
+                    display.enterPin(keyEntered, keyboard);
+                    break;
+                case State::CORRECT_PIN:
+                    display.showAccessGranted(keyboard);
+                    break;
+                case State::INCORRECT_PIN:
+                    display.showAccessDenied(keyboard);
+                    break;
+                case State::ENTER_FINGERPRINT:
+                    display.touchFingerprint(keyEntered, keyboard, fingerprintSensor);
+                    break;
+                case State::CORRECT_FINGERPRINT:
+                    display.showAccessGranted(keyboard);
+                    break;
+                case State::INCORRECT_FINGERPRINT:
+                    display.showAccessDenied(keyboard);
+                    break;
+                case State::FAILED_ATTEMPTS:
+                    display.failedAttemptsCountdown(keyboard);
+                    break;
+                default:
+                    break;
+            }
+            // In case the 3 is pressed in the menu, we send the internal message
+            if (keyEntered == '4' && display.state == State::MENU) {
+                // Take the mutex and toggle the sendOpenFake
+                if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+                    // Toggle it in case it's false
+                    if (!sendFakeOpen) {
+                        sendFakeOpen = true;
+                    }
+                    xSemaphoreGive(mutex);
                 }
-                xSemaphoreGive(mutex);
             }
         }
 
@@ -93,7 +107,5 @@ void userInteraction(void* parameter) {
             }
             xSemaphoreGive(mutex);
         }
-        // if (oledOn)
-        //     Serial.println("oledOn is true");
     }
 }
