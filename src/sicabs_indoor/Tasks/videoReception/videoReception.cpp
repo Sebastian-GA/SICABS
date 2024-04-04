@@ -47,7 +47,7 @@ unsigned long int timeOut = 8000;
 void onMessageCallback(WebsocketsMessage message) {
     if (message.isText()) {
         String receivedMessage = message.c_str();
-        Serial.print("\nMessage received: ");
+        Serial.print("\nMensaje recibido: ");
         Serial.println(receivedMessage);
         // de-encrypt the inner counter
         int internalCounter = memoryManager.readDeencrypted("counter");
@@ -56,7 +56,7 @@ void onMessageCallback(WebsocketsMessage message) {
         bool correct = receivedMessage == communicationEncryption.encrypt(internalCounter - 1);
 
         if (correct) {
-            Serial.println("It's correct");
+            Serial.println("\nEs el mensaje de apertura esperado!");
             // Take semaphore and change it
             if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
                 openDoor = true;
@@ -64,7 +64,7 @@ void onMessageCallback(WebsocketsMessage message) {
             }
             correctMessage = true;
         } else {
-            Serial.println("It's not correct");
+            Serial.println("No es el mensaje de apertura esperado...");
             incorrectMessage = true;
         }
     }
@@ -128,7 +128,7 @@ void videoReception(void* parameter) {
     // 2) starts to listen to messages
     server.listen(SERVER_PORT);
 
-    Serial.print("Video task unning on core ");
+    Serial.print("Video task running on core ");
     Serial.println(xPortGetCoreID());
     Serial.println("Looking for a client...");
     while (!screenClient.available())
@@ -138,7 +138,7 @@ void videoReception(void* parameter) {
     screenClient.onMessage(onMessageCallback);
 
     for (;;) {
-        Serial.println("printed from loop");
+        // Serial.println("printed from loop");
         // screenClient.send("Saludos desde la pantalla");
         // Serial.println("I just sent a message from the big screen");
         if (screenClient.available())
@@ -149,14 +149,17 @@ void videoReception(void* parameter) {
             String internalCounterEncrypted = communicationEncryption.encrypt(internalCounter);
             // Finally send it
             screenClient.send(internalCounterEncrypted);
-            Serial.print("Message sent: ");
+            Serial.print("Se envió de vuelta el siguiente mensaje: ");
             Serial.println(internalCounterEncrypted);
-            Serial.print("Which is the number: ");
+            Serial.print("Que equivale al número: ");
+            Serial.println(internalCounter);
+
+            Serial.print("Contador interno estaba en: ");
             Serial.println(internalCounter);
 
             // increment the local counter by 2
             internalCounter = internalCounter + 2;
-            Serial.print("Number incremented to: ");
+            Serial.print("Ahora se ha incrementado a: ");
             Serial.println(internalCounter);
             Serial.println(" ");
 
@@ -168,7 +171,7 @@ void videoReception(void* parameter) {
         }
         if (incorrectMessage) {
             // Send a -1
-            Serial.println("Not the expected number...");
+            Serial.println("Mensaje de apertura incorrecto.");
             screenClient.send(String(-1));
             Serial.println(" ");
 

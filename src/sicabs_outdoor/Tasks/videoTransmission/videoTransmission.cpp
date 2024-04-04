@@ -92,6 +92,7 @@ void videoTransmission(void* parameter) {
             camera.sendImageToIndoor();
         else
             Serial.println("SendImagesOn is false");
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
