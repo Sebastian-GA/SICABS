@@ -7,11 +7,12 @@
 #include "MemoryManager.h"
 #include "credentials.h"
 
+// For sending opening signal
 extern bool sendOpen;
 extern bool sendFakeOpen;
 extern SemaphoreHandle_t mutex;
 
-// for idle state
+// For idle state
 extern bool idle;
 extern SemaphoreHandle_t idleStateMutex;
 bool idleTransmission = false;
@@ -64,9 +65,9 @@ void videoTransmission(void* parameter) {
                 // Send it encrypted
                 camera.client.send(counterToBeTransmitted);
                 // Show what was sent
-                Serial.print("\nSent to screen: ");
+                Serial.print("\nMensaje enviado al módulo interior: ");
                 Serial.println(counterToBeTransmitted);
-                Serial.print("Which is: ");
+                Serial.print("Que equivale al número: ");
                 Serial.println(counter);
 
                 sendOpen = false;
@@ -75,7 +76,7 @@ void videoTransmission(void* parameter) {
                 // Stop sending images for a while
                 sendImages = false;
                 String internalCounterEncrypted = memoryManager.read("counter");
-                Serial.println("Sending counter as encrypted internally...");
+                Serial.println("Enviando contador tal y como está encriptado en el almacenamiento interno...");
                 camera.client.send(internalCounterEncrypted);
                 sendFakeOpen = false;
             }
