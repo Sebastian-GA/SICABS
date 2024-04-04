@@ -7,6 +7,7 @@
 #include <esp_camera.h>
 
 #include "cameraConfig.h"
+#include "credentials.h"
 
 class Camera {
    public:
