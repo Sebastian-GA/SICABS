@@ -14,6 +14,11 @@ String MemoryManager::read(const char* key) {
 
     return gotValue;
 }
+void MemoryManager::remove(const char* key) {
+    preferences.begin("esp32cam", false);
+    preferences.remove(key);
+    preferences.end();
+}
 int MemoryManager::readDeencrypted(const char* key) {
     // We're only going to read data
     preferences.begin("esp32cam", true);

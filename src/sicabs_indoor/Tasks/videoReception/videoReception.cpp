@@ -11,7 +11,6 @@
 #include "MemoryManager.h"
 #include "config.h"
 #include "credentials.h"
-#include "credentials_template.h"
 /**************************************************************************
  * DEFINITIONS
  **************************************************************************/
@@ -38,14 +37,16 @@ bool incorrectMessage = false;
 EncryptionManager communicationEncryption;
 MemoryManager memoryManager;
 
-int toIncrement = 1;
+// int toIncrement = 1;
+unsigned long int lastTimeMessageReceived = 0;
+unsigned long int timeOut = 8000;
 /**************************************************************************
  * CALLBACK FUNCTIONS
  **************************************************************************/
 void onMessageCallback(WebsocketsMessage message) {
     if (message.isText()) {
         String receivedMessage = message.c_str();
-        Serial.print("\nMessage received: ");
+        Serial.print("\nMensaje recibido: ");
         Serial.println(receivedMessage);
         // de-encrypt the inner counter
         int internalCounter = memoryManager.readDeencrypted("counter");
@@ -54,14 +55,21 @@ void onMessageCallback(WebsocketsMessage message) {
         bool correct = receivedMessage == communicationEncryption.encrypt(internalCounter - 1);
 
         if (correct) {
-            Serial.println("It's correct");
+            Serial.println("\nEs el mensaje de apertura esperado!");
+            // Take semaphore and change it
+            if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+                openDoor = true;
+                xSemaphoreGive(mutex);
+            }
             correctMessage = true;
         } else {
-            Serial.println("It's not correct");
+            Serial.println("No es el mensaje de apertura esperado...");
             incorrectMessage = true;
         }
     }
     TJpgDec.drawJpg(0, 0, (const uint8_t*)message.c_str(), message.length());
+
+    // record the last time a message was received
 }
 
 void onEventsCallback(WebsocketsEvent event, String data) {
@@ -119,7 +127,7 @@ void videoReception(void* parameter) {
     // 2) starts to listen to messages
     server.listen(SERVER_PORT);
 
-    Serial.print("Video task unning on core ");
+    Serial.print("Video task running on core ");
     Serial.println(xPortGetCoreID());
     Serial.println("Looking for a client...");
     while (!screenClient.available())
@@ -129,6 +137,7 @@ void videoReception(void* parameter) {
     screenClient.onMessage(onMessageCallback);
 
     for (;;) {
+        // Serial.println("printed from loop");
         // screenClient.send("Saludos desde la pantalla");
         // Serial.println("I just sent a message from the big screen");
         if (screenClient.available())
@@ -139,14 +148,17 @@ void videoReception(void* parameter) {
             String internalCounterEncrypted = communicationEncryption.encrypt(internalCounter);
             // Finally send it
             screenClient.send(internalCounterEncrypted);
-            Serial.print("Message sent: ");
+            Serial.print("Se envió de vuelta el siguiente mensaje: ");
             Serial.println(internalCounterEncrypted);
-            Serial.print("Which is the number: ");
+            Serial.print("Que equivale al número: ");
+            Serial.println(internalCounter);
+
+            Serial.print("Contador interno estaba en: ");
             Serial.println(internalCounter);
 
             // increment the local counter by 2
             internalCounter = internalCounter + 2;
-            Serial.print("Number incremented to: ");
+            Serial.print("Ahora se ha incrementado a: ");
             Serial.println(internalCounter);
             Serial.println(" ");
 
@@ -158,11 +170,12 @@ void videoReception(void* parameter) {
         }
         if (incorrectMessage) {
             // Send a -1
-            Serial.println("Not the expected number...");
+            Serial.println("Mensaje de apertura incorrecto.");
             screenClient.send(String(-1));
             Serial.println(" ");
 
             incorrectMessage = false;
         }
+        // Restart if no message has been sent
     }
 }

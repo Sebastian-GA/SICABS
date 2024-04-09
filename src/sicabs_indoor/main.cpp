@@ -16,15 +16,14 @@ void setup() {
     Serial.println();
     Serial.println("---SICABS Indoor---");
     Serial.println();
-    // mutex = xSemaphoreCreateMutex();
 
     if (xTaskCreatePinnedToCore(videoReception, "Video projection", 10000, NULL, 1, &video, 1) != pdPASS) {
         Serial.println("video not allocated :(");
     }
 
-    // if (xTaskCreatePinnedToCore(lockControl, "blink LED", 5000, NULL, 1, &led, 0) != pdPASS) {
-    //     Serial.println("LED blinking not allocated :(");
-    // }
+    if (xTaskCreatePinnedToCore(lockControl, "Lock control", 5000, NULL, 1, &led, 0) != pdPASS) {
+        Serial.println("Lock control not allocated :(");
+    }
 
     vTaskDelete(NULL);
 }

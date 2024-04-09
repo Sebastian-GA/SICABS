@@ -12,6 +12,7 @@ class MemoryManager {
     int readDeencrypted(const char* key);
     void write(const char* key, String input);
     void writeEncrypted(const char* key, int input);
+    void remove(const char* key);
 
    private:
     Preferences preferences;

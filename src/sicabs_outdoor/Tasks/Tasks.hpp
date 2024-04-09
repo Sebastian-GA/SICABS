@@ -3,5 +3,6 @@
 
 void userInteraction(void* parameter);
 void videoTransmission(void* parameter);
+void PIRSensorSleepControl(void* parameter);
 
 #endif
